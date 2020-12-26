@@ -1,0 +1,78 @@
+\documentclass{book}
+\usepackage[utf8]{inputenc}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{svg}
+\usepackage{tabularx}
+\usepackage{hyperref}
+
+\usepackage{geometry}
+\geometry{
+    a4paper,
+    left=30mm,
+    right=30mm,
+    top=40mm,
+    bottom=30mm
+}
+
+\usepackage{tikz}
+\usetikzlibrary{circuits}
+\usetikzlibrary{shapes,arrows}
+\usetikzlibrary{positioning}
+
+\tikzset{auto,>=latex', minimum size=0pt}
+
+\tikzstyle{block} = [draw, fill=white, rectangle, minimum height=3em, minimum width=4em]
+\tikzstyle{integrator} = [draw, fill=white, rectangle, minimum height=3em, minimum width=2em, font={$\frac{1}{s}$}]
+\tikzstyle{sum} = [draw, fill=white, circle, node distance=1cm]
+\tikzstyle{input} = [coordinate]
+\tikzstyle{output} = [coordinate]
+\tikzstyle{pinstyle} = [pin edge={to-,thin,black}]
+\tikzstyle{gain} = [draw, isosceles triangle, minimum height = 3em, isosceles triangle apex angle=60]
+\tikzstyle{node} = [inner sep=0pt, outer sep=0pt, minimum size=0pt]
+
+
+\usepackage{amsmath,amssymb}
+
+\usepackage{bodegraph}
+
+\usetikzlibrary{intersections}
+\usetikzlibrary{calc}
+
+\setlength{\parindent}{0em}
+
+
+\newenvironment{conditions}
+  {\par\vspace{\abovedisplayskip}\noindent\centering\begin{tabular}{>{$}l<{$} @{${}:{}$} l}}
+  {\end{tabular}\par\vspace{\belowdisplayskip}}
+
+
+\DeclareMathOperator{\im}{im}
+\DeclareMathOperator{\rad}{rad}
+
+\newcommand{\matr}[1]{\boldsymbol{#1}}
+\newcommand{\vect}[1]{\boldsymbol{#1}}
+
+\newcommand{\trans}{\mathsf{T}}
+\newcommand{\psinv}{\dag}
+\newcommand\norm[1]{\left\lVert#1\right\rVert}
+
+\newcommand{\J}{\matr{J}}
+\newcommand{\q}{\vect{q}}
+\newcommand{\dq}{\dot{\q}}
+\newcommand{\ddq}{\ddot{\q}}
+
+\newcommand{\warning}[1]{\textcolor{red}{WARNING #1}}
+
+\begin{document}
+
+\include{chapters/1-kinematic_redundancy}
+\include{chapters/2-dynamics}
+\include{chapters/3-motion_planning}
+\include{chapters/4-decentralized_control}
+\include{chapters/5-centralized_control}
+\include{chapters/6-control_interaction}
+\include{chapters/7-vision-control}
+\include{chapters/8-collaborative-robotics}
+
+\end{document}

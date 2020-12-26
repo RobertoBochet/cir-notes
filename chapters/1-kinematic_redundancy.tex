@@ -1,0 +1,133 @@
+\chapter{Kinematic redundancy}
+
+We let $\vect{p}=k(\q)$ where $p$ is the pose of the end effector in the task space, $\q$ the joint configuration. The kinematic function $k(\cdot)$ provides the transformation from the joint space $\mathbb{R}^n$ to the task space $\mathbb{R}^m$.
+
+A robot is kinematically redundant if $n > m$.
+
+\begin{em} n.b. task space may be a subset of the operational space so the dimension of the second may be less than the first, that's why the redundancy is a relative concept.\end{em}
+
+\section{Inverse kinematics}
+
+$$ \q=k^{-1}(\vect{p})$$
+
+When a robot is kinematically redundant the inversion of the kinematics gives infinite solutions and there are internal motion that not affect the pose of the end effector.
+
+In order to solve this issue the problem is usually addressed in the speed domain.
+
+\begin{equation}
+\dot{\vect{p}} = \J(\q) \dq
+\label{eqn:inverse-constraint}
+\end{equation}
+
+Where $\J(\q)$ is the Jacobian of the robot associated to the task space.
+
+\subsection{Jacobian}
+
+For a redundant robot the Jacobian are a rectangular matrix with the shape of $(m \times n)$ where $n > m$ as we saw before.
+
+$$ \dim(\im(\J)) = m \quad \dim(\ker(\J)) = n - m $$
+
+The null space exists only for redundant robot.
+
+So we can compose a movement as
+
+$$ \dq = \dq^* + \matr{P} \dq_0 \quad \text{where} \quad \im(\matr{P}) \equiv \ker(\matr{J}) $$
+
+with $P \dot{q}_0$ that does not contribute to the movement of the end effector, in fact if we multiply the equation to J from left we get
+
+$$ \J\dq = \J\dq^* + \J P \dq_0 = \J \dq^* = \dot{\vect{p}} $$
+
+where $J P \dq_0 = 0$ for each $\dq_0$.
+
+\subsection{Finding a generic solution}
+
+We can approach to the problem like a optimization one, as first thing we define a cost function in the joint space
+
+$$ g(\dq) = \frac{1}{2} \dq^T \matr{W} \dq $$
+
+$\matr{W}$ is a symmetrical weight matrix $(n \times n)$ and $\matr{W} > 0$
+
+we want to find the optimal solution under the constrain $\dot{p} = \matr{W}(q) \dot{q}$ so we can use the Lagrange multiplier
+
+$$ \mathcal{L}(\dq, \vect{\lambda}) = \frac{1}{2} \dq^T \matr{W} \dq + \lambda^T (\dot{p} - \J \dq)$$
+
+$$
+\left(\frac{\partial \mathcal{L}}{\partial \dq}\right)^\trans = 0 \quad
+\left(\frac{\partial \mathcal{L}}{\partial \vect{\lambda}}\right)^\trans = 0
+$$
+
+from these we get
+
+$$ \matr{W}\dq - \J^T\vect{\lambda} = 0 \qquad \dot{\vect{p}} - \J\dq = 0 $$
+
+to combine the two equation we can find $\vect{\lambda}$
+
+$$
+\dot{\vect{p}} = \J\matr{W}^{-1}\J^\trans \vect{\lambda} \implies
+\vect{\lambda} = (\J\matr{W}^{-1}\J^\trans)^{-1} \dot{\vect{p}}
+$$
+
+and with a recombination with the first equation we get the solution
+
+$$ \dq = \matr{W}^{-1} \J^\trans (\J\matr{W}^{-1}\J^\trans)^{-1} \dot{\vect{p}} $$
+
+$$\text{special case} \quad \matr{W} = \matr{I} \implies \dq = \J^\psinv \dot{\vect{p}} $$
+
+The matrix $\J^\psinv = \J^\trans (\J\J^\trans)^{-1}$ is called \textbf{right pseudo inverse} matrix.
+With dualism we can define the matrix $\J^\psinv_W = \matr{W}^{-1} \J^\trans (\J\matr{W}^{-1}\J^\trans)^{-1}$ calling \textbf{weighted pseudo inverse} matrix.
+
+\subsection{Finding a solution exploiting redundant}
+
+As we saw before if $\dq^*$ is a valid solution to inverse problem also $\dq^* + \matr{P}\dq_0$ is it. So, we can modify the general approach saw above to find a solution that exploiting the redundant. We consider a new cost function
+
+$$ g'(\dq) = \frac{1}{2} (\dq - \dq_0)^T (\dq - \dq_0) $$
+
+in order to find a solution under the constrain \ref{eqn:inverse-constraint} close to $\dq_0$.
+
+$$ \mathcal{L}'(\dq, \vect{\lambda}) = \frac{1}{2} (\dq - \dq_0)^T (\dq - \dq_0) + \vect{\lambda}^T (\dot{\vect{p}} - \J \dq) $$
+
+From $\frac{\partial \mathcal{L}'}{\partial \dq} = 0$ and the constraint \ref{eqn:inverse-constraint} we can get $\vect{\lambda}$
+
+$$\vect{\lambda} = (\J\J^\trans)^{-1} (\dot{\vect{p}} - \J\dq_0)$$
+
+then we get the solution
+
+$$ \dq = \J^\psinv \dot{\vect{p}} + (\matr{I} - \J^\psinv \J) \dq_0 $$
+
+So we found $(\matr{I} - \J^\psinv \J)$ a solution for the matrix $\matr{P}$.
+
+\subsubsection{Choosing $\dq_0$}
+
+Now we can choose $\dq_0$ to improve the behaviour of the robot exploiting its redundancy. A typical choice of $\dq_0$ called \textbf{projected gradient} has the shape
+
+$$ \dq_0 = k_0 \left(\frac{\partial w(\q)}{\partial \q}\right)^\trans $$
+
+Choosing $w(\q)$ as a cost function to maximize to increase a specific performance:
+
+\begin{itemize}
+\item \textbf{Manipulability} measure to maximizes the distance from singularities
+$$ w(\q) = \sqrt{\det(\J(\q)\J^\trans(\q))}$$
+
+\item Distance form \textbf{joint limits}
+$$ w(\q) = \frac{1}{2n} \sum_{i=1}^{n} \left( \frac{q_i - \bar{q}_i}{q_{iM} - \bar{q}_{im}} \right)^2 $$
+
+\item Distance from the \textbf{closet obstacle}
+$$ w(\q) = \min_{\vect{p},\vect{o}}\norm{\vect{p}(\q)-\vect{o}} $$
+\end{itemize}
+
+$k_0 > 0$ can be arbitrary chosen. 
+
+\subsection{Possible issues with redundant robots}
+
+Mainly two possible issues
+
+\begin{itemize}
+\item A close trajectory in the task space can be mapped as a open trajectory in the joint space
+\item Trajectories with the same initial and final task positions may end with different joint configurations
+\end{itemize}
+
+A possible solution to these problems is the method called \textbf{repeatable} or \textbf{cyclic}
+
+
+\warning{missing ciclicity, extended jacobian, and control}
+
