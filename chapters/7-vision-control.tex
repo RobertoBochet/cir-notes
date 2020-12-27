@@ -1,0 +1,313 @@
+\chapter{Control with vision sensors}\label{ch:vision-control}
+
+\section{Camera}
+
+A camera performs a 2D projection of a 3D space, this projection involves an information loss.
+To determinate coordinates of a 3D point from the 2D projection additional information are needed.
+
+\subsection{Perspective projection}
+
+If we identify a 3D point in the space with the tuple \((X,Y,Z)\) and the corresponding point in the projection space with the tuple \((x,y)\) we can identify the following relations
+
+\begin{equation}
+	x = \frac{\lambda}{Z}X \quad y = \frac{\lambda}{Z}Y
+\label{eq:projected_point}
+\end{equation}
+
+Where $\lambda$ is the focal length(in pixel) of the camera.
+
+\begin{nb}the above relations is valid only if 3D space and projection space share the same reference frame\end{nb}
+
+\subsection{Calibration}
+
+Before using the camera its need to be calibrated; we need to find two kinds of parameters
+
+\begin{itemize}
+	\item Intrinsic parameters
+
+	The parameters that characterize the camera as the focal length, and some kind of aberration in the lens that have to be considered in computer vision task.
+	All these parameters are fixed for the camera, and it is not necessary to recalculate when the task changes.
+
+	\item Extrinsic parameters
+
+	All the other parameters used to map the 3D point into the projective space, like camera's orientation and position respect the global reference frame.
+	If the camera is moved the extrinsic parameters have to be recalculated.
+\end{itemize}
+
+\subsection{Camera configuration}
+
+There are two main camera configuration in vision control of manipulator
+
+\subsubsection{Eye-to-hand}
+
+The camera is fixed to the global reference frame, pointed toward the task space.
+
+\begin{itemize}
+	\item Advantages
+	\begin{itemize}
+		\item The movements of the robot does not affect the camera field of view
+		\item The geometric relation between projective space and the 3D space does not change
+	\end{itemize}
+
+	\item Disadvantages
+	\begin{itemize}
+		\item The movements of the robot may occlude the camera field of view
+	\end{itemize}
+\end{itemize}
+
+\subsubsection{Eye-in-hand}
+
+The camera is attached to the robot, usually on the robot wrist.
+
+\begin{itemize}
+	\item Advantages
+	\begin{itemize}
+		\item The camera field of view are fixed on the end effector
+		\item The camera field of view is never occluded by the robots
+	\end{itemize}
+
+	\item Disadvantages
+	\begin{itemize}
+		\item The geometric relation between projective space and the 3D space changed with the robot movements
+		\item The camera field of view continuously change even for small movements
+	\end{itemize}
+\end{itemize}
+
+\section{Control}
+
+The main control schemes based on computer vision are given by the combination of two measure methods and two actuation approaches.
+
+\subsection{Measure: Position based vs image based}
+
+The camera image can be use in two-way to produce measurements for the control
+
+\subsubsection{Position based}
+
+From the camera images a partial 3D representation of the task space is recreated exploiting technics of computer vision.
+Algorithms to estimate the pose are computably intense and sensitive to errors in camera calibration.
+
+\subsubsection{Image based}
+
+No transformation between projective space of the camera image to the real 3D worlds is attempted, the image is directly used to provide the measurements to the control system.
+The error for the controller is defined on a quantities directly measurable from the image.
+
+\subsection{Actuation: Dynamic look and move vs visual servoing}
+
+The action control based on the visual can be applied to different level of the control stack
+
+\subsubsection{Dynamic look and move}
+
+The visual information are used at high level of the control;
+the speed control is not based on visual data and only the position control exploiting the visual measurements.
+The camera can work at low framerate without compromising the overall performance of the position control system.
+In same industrial application is the only way to go because the only accessible control variable on the robot is the position set point.
+
+\subsubsection{Visual servoing}
+
+The visual information are used also at the low level control;
+so, the access to the actuators input of the robots is necessary to exploiting the visual control to achieve high control performances.
+It is also required a high framerate to achieve high performances.
+
+\begin{figure}
+	\centering
+	\begin{tikzpicture}
+		\node [input] (input) {};
+		\node [sum] at (1.,0.) (sum) {};
+		\node [block, text width=2cm, align=center] (controller) at (3,0) {Cartesian controller};
+		\node [block, text width=2cm, align=center] (axis-controller) at (6,0) {Axis controller};
+		\node [block] (actuators) at (8.5,0) {Actuators};
+		\node [block] (robot) at (10.5,0) {Robot};
+		\node [block, text width=2cm, align=center] (image-processor) at (8,-2.5) {\small Image feature extraction};
+		\node [block, text width=2cm, align=center] (computer-vision) at (3.5,-2.5) {\small Pose estimator};
+
+		\draw [->] (input) -- node {$\bar{\vect{x}}_d$} (sum);
+		\draw [->] (sum) -- (controller);
+		\draw [->] (actuators) -- (robot);
+		\draw [->] ([xshift=0.5cm]robot) |- node [pos=.7] {video} (image-processor);
+		\draw [->] ([xshift=-0.5cm]robot) |- (8,-1.2) -| (axis-controller);
+		\draw [->] (axis-controller) -- (actuators);
+		\draw [->] (controller) -- (axis-controller);
+		\draw [->] (computer-vision) -| node [pos=0.95] {$-$} node [pos=0.2] {$\hat{\vect{x}}$} (sum);
+		\draw [->] (image-processor) -- node {$\vect{\xi}$} (computer-vision);
+	\end{tikzpicture}
+	\caption{Dynamic look and move position based}
+	\label{fig:dynamic-look-move-position-based}
+\end{figure}
+
+\begin{figure}
+	\centering
+	\begin{tikzpicture}
+		\node [input] (input) {};
+		\node [sum] at (1.,0.) (sum) {};
+		\node [block, text width=2cm, align=center] (controller) at (3,0) {Image space controller};
+		\node [block, text width=2cm, align=center] (axis-controller) at (6,0) {Axis controller};
+		\node [block] (actuators) at (8.5,0) {Actuators};
+		\node [block] (robot) at (10.5,0) {Robot};
+		\node [block, text width=2cm, align=center] (image-processor) at (8,-2.5) {\small Image feature extraction};
+
+		\draw [->] (input) -- node {$\bar{\vect{\xi}}_d$} (sum);
+		\draw [->] (sum) -- (controller);
+		\draw [->] (actuators) -- (robot);
+		\draw [->] ([xshift=0.5cm]robot) |- node [pos=.7] {video} (image-processor);
+		\draw [->] ([xshift=-0.5cm]robot) |- (8,-1.2) -| (axis-controller);
+		\draw [->] (axis-controller) -- (actuators);
+		\draw [->] (controller) -- (axis-controller);
+		\draw [->] (image-processor) -| node [pos=0.95] {$-$} node [pos=0.05] {$\vect{\xi}$} (sum);
+	\end{tikzpicture}
+	\caption{Dynamic look and move image based}
+	\label{fig:dynamic-look-move-image-based}
+\end{figure}
+
+\begin{figure}
+	\centering
+	\begin{tikzpicture}
+		\node [input] (input) {};
+		\node [sum] at (1.,0.) (sum) {};
+		\node [block, text width=2cm, align=center] (controller) at (3,0) {Cartesian controller};
+		\node [block] (actuators) at (8.5,0) {Actuators};
+		\node [block] (robot) at (10.5,0) {Robot};
+		\node [block, text width=2cm, align=center] (image-processor) at (8,-2.5) {\small Image feature extraction};
+		\node [block, text width=2cm, align=center] (computer-vision) at (3.5,-2.5) {\small Pose estimator};
+
+		\draw [->] (input) -- node {$\bar{\vect{x}}_d$} (sum);
+		\draw [->] (sum) -- (controller);
+		\draw [->] (actuators) -- (robot);
+		\draw [->] ([xshift=0.5cm]robot) |- node [pos=.7] {video} (image-processor);
+		\draw [->] (controller) -- (actuators);
+		\draw [->] (computer-vision) -| node [pos=0.95] {$-$} node [pos=0.2] {$\hat{\vect{x}}$} (sum);
+		\draw [->] (image-processor) -- node {$\vect{\xi}$} (computer-vision);
+	\end{tikzpicture}
+	\caption{Visual servoing position based}
+	\label{fig:visual-servoing-position-based}
+\end{figure}
+
+\begin{figure}
+	\centering
+	\begin{tikzpicture}
+		\node [input] (input) {};
+		\node [sum] at (1.,0.) (sum) {};
+		\node [block, text width=2cm, align=center] (controller) at (3,0) {Image space controller};
+		\node [block] (actuators) at (8.5,0) {Actuators};
+		\node [block] (robot) at (10.5,0) {Robot};
+		\node [block, text width=2cm, align=center] (image-processor) at (8,-2.5) {\small Image feature extraction};
+
+		\draw [->] (input) -- node {$\bar{\vect{\xi}}_d$} (sum);
+		\draw [->] (sum) -- (controller);
+		\draw [->] (actuators) -- (robot);
+		\draw [->] ([xshift=0.5cm]robot) |- node [pos=.7] {video} (image-processor);
+		\draw [->] (controller) -- (actuators);
+		\draw [->] (image-processor) -| node [pos=0.95] {$-$} node [pos=0.05] {$\vect{\xi}$} (sum);
+	\end{tikzpicture}
+	\caption{Visual servoing image based}
+	\label{fig:visual-servoing-image-based}
+\end{figure}
+
+\subsection{Image based schema}
+
+Design an image based control is a critical task;
+we need to relate motion of the camera with motion of the features in the image.
+
+Let us consider a fixed point $\vect{P}$ in the space and the camera frame $c$, we can state
+
+\[ \vect{P}^w = \vect{O}_c^w(t) + \matr{R}_c^w(t) \vect{P}^c(t) \]
+
+differentiating in time
+
+\[ \vect{0} = \dot{\vect{O}}_c^w + \dot{\matr{R}}_c^w \vect{P}^c + \matr{R}_c^w \dot{\vect{P}}^c \]
+
+and find the solution for $\dot{\vect{P}}^c$
+
+\[ \dot{\vect{P}}^c = - \dot{\vect{O}}_c^c - \dot{\matr{R}}_c^c \vect{P}^c \]
+
+remembering that $\dot{\matr{R}} \vect{P} = \vect{\omega} \times \vect{P}$ we get
+
+\[ \dot{\vect{P}}^c = - \dot{\vect{O}}_c^c - \vect{\omega}_c^c \times \vect{P}^c \]
+
+where all the vector are expressed in the camera frame.
+
+Define
+
+\[
+	\vect{P}^c = \begin{bmatrix} X \\ Y \\ Z \end{bmatrix} \quad
+	\vect{\omega}_c^c = \begin{bmatrix} \omega_x \\ \omega_y \\ \omega_z \end{bmatrix} \quad
+	\dot{\vect{O}}_c^c = \begin{bmatrix} \dot{O}_x \\ \dot{O}_y \\ \dot{O}_z \end{bmatrix}
+\]
+
+we can write
+
+\begin{gather*}
+	\dot{X} = Y\omega_z - Z\omega_y - \dot{O}_x \\
+	\dot{Y} = Z\omega_x - X\omega_z - \dot{O}_y \\
+	\dot{Z} = X\omega_y - Y\omega_x - \dot{O}_z
+\end{gather*}
+
+remembering \autoref{eq:projected_point} we get
+
+\begin{gather*}
+	\dot{X} = \frac{x}{\lambda} Z\omega_z - Z\omega_y - \dot{O}_x \\
+	\dot{Y} = Z\omega_x - \frac{y}{\lambda} Z\omega_z - \dot{O}_y \\
+	\dot{Z} = \frac{x}{\lambda} Z\omega_y - \frac{y}{\lambda} Z\omega_x - \dot{O}_z
+\end{gather*}
+
+Differentiating in time projective coordinate from \autoref{eq:projected_point}
+
+\begin{gather*}
+	\dot{x} = \lambda \frac{d}{dt}\frac{X}{Z} = \lambda \frac{\dot{X}Z - X\dot{Z}}{Z^2} \\
+	\dot{y} = \lambda \frac{d}{dt}\frac{Y}{Z} = \lambda \frac{\dot{Y}Z - Y\dot{Z}}{Z^2}
+\end{gather*}
+
+now we can finally write the relation between motion of the camera to the motion of the image's features
+
+\[
+	\begin{bmatrix} \dot{x} \\ \dot{y} \end{bmatrix} =
+	\matr{L}(\lambda, x, y, Z)
+	\begin{bmatrix} \dot{\vect{O}}_c^c \\ \vect{\omega}_c^c \end{bmatrix}
+\]
+
+where
+
+\[
+	\matr{L}(\lambda, x, y, Z) =
+	\begin{bmatrix}
+		-\frac{\lambda}{Z} & 0 & \frac{x}{Z} & \frac{xy}{\lambda} & -\frac{\lambda^2 + x^2}{\lambda}  & y \\
+		0 & -\frac{\lambda}{Z} & \frac{y}{Z} & \frac{\lambda^2 + y^2}{\lambda} & -\frac{xy}{\lambda} & -x
+	\end{bmatrix}
+\]
+
+and it is called \textbf{interaction matrix}.
+
+\subsubsection{Interaction matrix}
+
+The \textbf{interaction matrix} is a $2\times6$ matrix, it depends on variable values $x$, $y$ and $Z$.
+If it decomposed
+
+\[
+	\begin{bmatrix} \dot{x} \\ \dot{y} \end{bmatrix} =
+	\matr{L}_O(\lambda, x, y, Z) \dot{\vect{O}}_c^c + \matr{L}_\omega(\lambda, x, y) \vect{\omega}_c^c
+\]
+
+we can see that the rotation part does not depend on depth $Z$.
+
+Due to the shape of it, we can state that exist an associated null space with dimension of 4, so there are four types of camera movement that not produce any change of the feature in the projective image.
+
+\subsubsection{Image Jacobian}
+
+If we try to bind camera speed we write
+
+\[ \begin{bmatrix} \dot{\vect{O}}_c^c \\ \vect{\omega}_c^c \end{bmatrix} = \matr{T}_w^c(\q) \matr{J}(\q)\dq \]
+
+where $ \matr{T}_w^c(\q)$ is the coordinate transformation between world and camera frame, and $\matr{J}(\q)$ is the robot \textbf{geometrical Jacobian}.
+So, we can write
+
+\[
+	\begin{bmatrix} \dot{x} \\ \dot{y} \end{bmatrix} =
+	\matr{L}(\lambda, x, y, Z) \matr{T}_w^c(\q) \matr{J}(\q)\dq = \matr{J}_I(\lambda, x, y, Z, \q) \dq
+\]
+
+where $\matr{J}_I$ is the \textbf{image Jacobian}.
+
+The $Z$ parameter is clearly not available, but it can be estimated based on apriori information.
+
+Now the \textbf{image Jacobian} can be used to design the control law in the image based scheme.
+
+\[ \dq = \matr{J}_I^\psinv \left(\dot{\xi}_d + k (\xi_d - \xi)x\right) + \left(\matr{I} - \matr{J}_I^\psinv\matr{J}_I \right)\dq_0 \]
