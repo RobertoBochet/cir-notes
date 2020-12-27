@@ -1,4 +1,5 @@
-\documentclass{book}
+\documentclass{report}
+
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb}
 \usepackage{amsmath}
@@ -8,12 +9,14 @@
 
 \usepackage{geometry}
 \geometry{
-    a4paper,
-    left=30mm,
-    right=30mm,
-    top=40mm,
-    bottom=30mm
+a4paper,
+left=30mm,
+right=30mm,
+top=40mm,
+bottom=30mm
 }
+
+\setcounter{secnumdepth}{3}
 
 \usepackage{tikz}
 \usetikzlibrary{circuits}
@@ -43,9 +46,10 @@
 
 
 \newenvironment{conditions}
-  {\par\vspace{\abovedisplayskip}\noindent\centering\begin{tabular}{>{$}l<{$} @{${}:{}$} l}}
-  {\end{tabular}\par\vspace{\belowdisplayskip}}
+{\par\vspace{\abovedisplayskip}\noindent\centering\begin{tabular}{>{$}l<{$} @{${}:{}$} l}}
+{\end{tabular}\par\vspace{\belowdisplayskip}}
 
+\newenvironment{nb}{\par\vspace{\abovedisplayskip}\noindent\begin{em}n.b. }{\end{em}}
 
 \DeclareMathOperator{\im}{im}
 \DeclareMathOperator{\rad}{rad}
@@ -64,7 +68,17 @@
 
 \newcommand{\warning}[1]{\textcolor{red}{WARNING #1}}
 
+\usepackage{imakeidx}
+\makeindex
+
+\title{Control of industrial robots\\Notes}
+\author{Roberto Bochet}
+
 \begin{document}
+
+\maketitle
+
+\tableofcontents
 
 \include{chapters/1-kinematic_redundancy}
 \include{chapters/2-dynamics}
