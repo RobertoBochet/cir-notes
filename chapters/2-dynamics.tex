@@ -34,7 +34,7 @@ where $\dot{\vect{p}}_i^*$ is the speed of a generic point of the link, and it c
 $\vect{p}_{l_i}$ is the position of the center of mass of the i-th link and $\vect{r}_i$ the vector that define the position of generic point respect the link's center of mass.
 
 \begin{equation}
-    \vect{p}_{l_i} = \frac{1}{m_{l_i}} \int_{V_i} \vect{p}_i^* \rho dV \label{eq:center_mass}
+    \vect{p}_{l_i} = \frac{1}{m_i} \int_{V_i} \vect{p}_i^* \rho dV \label{eq:center_mass}
 \end{equation}
 
 Combining \autoref{eq:link_kinetic} and \autoref{eq:generic_link_point_speed} we get
@@ -62,7 +62,7 @@ We can identify in this equation three contributes:
 \[
 	\frac{1}{2} \int_{V_i} \dot{\vect{p}}_{l_i}^\trans \dot{\vect{p}}_{l_i} \rho dV =
 	\frac{1}{2} \dot{\vect{p}}_{l_i}^\trans \dot{\vect{p}}_{l_i} \int_{V_i} \rho dV =
-	\frac{1}{2} m_{l_i} \dot{\vect{p}}_{l_i}^\trans \dot{\vect{p}}_{l_i}
+	\frac{1}{2} m_i \dot{\vect{p}}_{l_i}^\trans \dot{\vect{p}}_{l_i}
 \]
 
 \paragraph{Mutual}
@@ -94,7 +94,7 @@ Let us define
 
 \[ \matr{I}_{l_i} = \int_{V_i} \matr{S}^\trans(\vect{r}_i) \matr{S}(\vect{r}_i) \rho dV \]
 
-and we call it \textbf{inertia tensor}\index{inertia tensor} referred to the center of mass of the i-th link \underline{expressed in the base frame}.
+and we call it \textbf{inertia tensor}\index{inertia!tensor} referred to the center of mass of the i-th link \underline{expressed in the base frame}.
 
 The \textbf{inertia tensor} is a symmetrical matrix $3 \times 3$ and its components are expressed as
 
@@ -105,4 +105,96 @@ The \textbf{inertia tensor} is a symmetrical matrix $3 \times 3$ and its compone
 		* & \int (r_{ix}^2 + r_{iz}^2) \rho dV & - \int r_{iy}r_{iz} \rho dV \\
 		* & * & \int (r_{ix}^2 + r_{iy}^2) \rho dV
 	\end{bmatrix}
+\]
+
+We have to note that the inertia tensor expressed in the base frame is dependent by robot configuration, so it would be better if we can express it in the joint frame.
+Exploiting the transformation of the rotation speed $\vect{\omega}$ remembering that $\vect{\omega}_i^i = \matr{R}_i^\trans\vect{\omega}_i$ we can write an equivalent tensor expressed in the joint frame as $\matr{I}_i=\matr{R}_i \matr{I}_i^i \matr{R}_i^\trans$.
+
+So, we can write the rotation contributes of i-th joint as
+
+\[
+	\frac{1}{2} \int_{V_i} \vect{r}_i^\trans \matr{S}^\trans(\vect{\omega}_i) \matr{S}(\vect{\omega}_i) \vect{r}_i \rho dV =
+	\frac{1}{2} \vect{\omega}_i^\trans \matr{I}_i \vect{\omega}_i =
+	\frac{1}{2} \vect{\omega}_i^\trans \matr{R}_i \matr{I}_i^i \matr{R}_i^\trans \vect{\omega}_i
+\]
+
+
+Now we can finally write the contribution of the i-th joint to the kinematics energy as
+
+\[
+	\mathcal{T}_{l_i} =
+	\frac{1}{2} m_i \dot{\vect{p}}_{l_i}^\trans \dot{\vect{p}}_{l_i} +
+	\frac{1}{2} \vect{\omega}_i^\trans \matr{R}_i \matr{I}_i^i \matr{R}_i^\trans \vect{\omega}_i
+\]
+
+The velocity can easily write as
+
+\[
+	\begin{bmatrix}
+		\dot{\vect{p}}_{l_i} \\
+		\vect{\omega}_i
+	\end{bmatrix} =
+	\begin{bmatrix}
+		\matr{J}_P^{(l_i)} \\
+		\matr{J}_O^{(l_i)}
+	\end{bmatrix} \dq =
+	\matr{J}^{(l_i)} \dq
+\]
+
+\begin{nb}$\matr{J}^{(l_i)}$ for a link $i$ include only the contribution of the joints $1, \dots, i$, so the column $i+1,\dots,n$ are equal to $\vect{0}$\end{nb}
+
+\[
+	\mathcal{T}_{l_i} =
+	\frac{1}{2} m_i \dq^\trans \matr{J}_P^{(l_i)\trans} \matr{J}_P^{(l_i)} \dq +
+	\frac{1}{2} \dq^\trans \matr{J}_O^{(l_i)\trans} \matr{R}_i \matr{I}_i^i \matr{R}_i^\trans \matr{J}_O^{(l_i)} \dq
+\]
+
+Now we can compute the sum for the kinetics energy (we consider $\mathcal{T}_{m_i} = 0$ for each motor for simplicity, but include motors contributions is an easy task)
+
+\[
+	\mathcal{T} =
+	\sum_{i=1}^n \mathcal{T}_{l_i} =
+	\frac{1}{2} \dq^\trans \matr{B}(\q) \dq
+\]
+
+where $\matr{B}(\q)$ is called \textbf{inertia matrix}\index{inertia!matrix} and it is defined as
+
+\[
+	\matr{B}(\q) = \sum_{i=1}^n \left(
+	m_i \matr{J}_P^{(l_i)\trans} \matr{J}_P^{(l_i)} +
+	\matr{J}_O^{(l_i)\trans} \matr{R}_i \matr{I}_i^i \matr{R}_i^\trans \matr{J}_O^{(l_i)}
+	\right)
+\]
+
+it is symmetrical, $> 0$ and it depends upon the robot configuration $\q$
+
+\subsection{Potential energy}
+
+Also for the potential energy we compute the total energy as the sum of the contribution of each link
+
+\[
+	\mathcal{U} = \sum_{i=1}^n \mathcal{U}_i
+\]
+
+The potential energy for a link is given by the gravitational force in accordig to this formula
+
+\[
+	\mathcal{U}_i = - \int_{V_i} \vect{g}_0^\trans \vect{p}_i^* \rho dV =
+	- m_i \vect{g}_0^\trans \vect{p}_i
+\]
+
+where $\vect{g}_0$ is the gravity acceleration vector expressed in the base frame.
+
+\[
+	\mathcal{U} = - \sum_{i=1}^n m_i \vect{g}_0^\trans \vect{p}_i
+\]
+
+\subsection{The Lagrangian}
+
+Now, we have $\mathcal{T}$ and $\mathcal{U}$ we can compute the Lagrangian function and solve the Lagrangian equation
+
+\[
+	\mathcal{L}(\q,\dq) = \mathcal{T}(\q,\dq) - \mathcal{U}(\q) =
+	\frac{1}{2} \dq^\trans \matr{B}(\q) \dq + \sum_{i=1}^n m_i \vect{g}_0^\trans \vect{p}_i =
+	\frac{1}{2} \sum_{i=1}^n \sum_{j=1}^n \dot{q}_i \dot{q}_j b_{ij}(\q) + \sum_{i=1}^n m_i \vect{g}_0^\trans \vect{p}_i(\q)
 \]
