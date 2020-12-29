@@ -1,1 +1,108 @@
-\chapter{Robot dynamics}
+\chapter{Robot dynamics}\label{ch:dynamics}
+
+To develop advance system of control and trajectory planning we need a dynamics representation of the robot, the bound between torques and the robot's motions.
+
+\section{Model exploiting Euler-Lagrange equation}
+
+We can exploit the Euler-Lagrange equation to derive a model fo the robot's dynamics.
+
+\[
+	\left(\frac{d}{dt}\frac{\partial \mathcal{L}}{\partial \dq}\right)^\trans - \left(\frac{\partial \mathcal{L}}{\partial \q}\right)^\trans = \vect{\xi} \qquad
+	\mathcal{L} = \mathcal{T} - \mathcal{U}
+\]
+
+where $\mathcal{T}$ is the kinetics energy, $\mathcal{U}$ is the potential energy and $\vect{\xi}$ the generalized forces associated to the vector $\q$.
+
+\subsection{Kinetics energy}
+
+\[ \mathcal{T} = \sum_{i=1}^n (\mathcal{T}_{l_i} + \mathcal{T}_{m_i}) \]
+
+This is the sum of the kinetics contributions of all the robot's links, in particular $\mathcal{T}_{l_i}$ is the contribution from the i-th link and $\mathcal{T}_{m_i}$ from the i-th joint motor.
+
+The contribution for the i-th link are defined as
+
+\begin{equation}
+    \mathcal{T}_{l_i} = \frac{1}{2} \int_{V_i}  \dot{\vect{p}}_i^{*\trans} \dot{\vect{p}}_i^* \rho dV \label{eq:link_kinetic}
+\end{equation}
+
+where $\dot{\vect{p}}_i^*$ is the speed of a generic point of the link, and it can be expressed as
+
+\begin{equation}
+    \dot{\vect{p}}_i^* = \dot{\vect{p}}_{l_i} + \vect{\omega}_i \times \vect{r}_i = \dot{\vect{p}}_{l_i} + \matr{S}(\vect{\omega}_i) \vect{r}_i \label{eq:generic_link_point_speed}
+\end{equation}
+
+$\vect{p}_{l_i}$ is the position of the center of mass of the i-th link and $\vect{r}_i$ the vector that define the position of generic point respect the link's center of mass.
+
+\begin{equation}
+    \vect{p}_{l_i} = \frac{1}{m_{l_i}} \int_{V_i} \vect{p}_i^* \rho dV \label{eq:center_mass}
+\end{equation}
+
+Combining \autoref{eq:link_kinetic} and \autoref{eq:generic_link_point_speed} we get
+
+\begin{align*}
+	\mathcal{T}_{l_i} &= \frac{1}{2} \int_{V_i}
+	\left(\dot{\vect{p}}_{l_i} +\matr{S}(\vect{\omega}_i) \vect{r}_i\right)^\trans
+	\left(\dot{\vect{p}}_{l_i} + \matr{S}(\vect{\omega}_i) \vect{r}_i\right) \rho dV \\
+	&= \frac{1}{2} \int_{V_i} \left(
+	\dot{\vect{p}}_{l_i}^\trans \dot{\vect{p}}_{l_i} +
+	\dot{\vect{p}}_{l_i}^\trans \matr{S}(\vect{\omega}_i) \vect{r}_i +
+	\vect{r}_i^\trans \matr{S}^\trans(\vect{\omega}_i)  \dot{\vect{p}}_{l_i} +
+	\vect{r}_i^\trans \matr{S}^\trans(\vect{\omega}_i) \matr{S}(\vect{\omega}_i) \vect{r}_i
+	\right) \rho dV \\
+	&=
+	\frac{1}{2} \int_{V_i} \dot{\vect{p}}_{l_i}^\trans \dot{\vect{p}}_{l_i} \rho dV +
+	\int_{V_i} \dot{\vect{p}}_{l_i}^\trans \matr{S}(\vect{\omega}_i) \vect{r}_i \rho dV +
+	\frac{1}{2} \int_{V_i} \vect{r}_i^\trans \matr{S}^\trans(\vect{\omega}_i) \matr{S}(\vect{\omega}_i) \vect{r}_i \rho dV
+\end{align*}
+
+We can identify in this equation three contributes:
+
+\paragraph{Translation}
+
+\[
+	\frac{1}{2} \int_{V_i} \dot{\vect{p}}_{l_i}^\trans \dot{\vect{p}}_{l_i} \rho dV =
+	\frac{1}{2} \dot{\vect{p}}_{l_i}^\trans \dot{\vect{p}}_{l_i} \int_{V_i} \rho dV =
+	\frac{1}{2} m_{l_i} \dot{\vect{p}}_{l_i}^\trans \dot{\vect{p}}_{l_i}
+\]
+
+\paragraph{Mutual}
+
+\[
+	\int_{V_i} \dot{\vect{p}}_{l_i}^\trans \matr{S}(\vect{\omega}_i) \vect{r}_i \rho dV =
+	\dot{\vect{p}}_{l_i}^\trans \matr{S}(\vect{\omega}_i) \int_{V_i} \vect{r}_i \rho dV =
+	\dot{\vect{p}}_{l_i}^\trans \matr{S}(\vect{\omega}_i) \int_{V_i} (\vect{p}_i^* - \vect{p}_{l_i}) \rho dV = 0
+\]
+
+Because from \autoref{eq:center_mass} we can notice that
+
+\[
+	\int_{V_i} \vect{p}_i^* \rho dV = \vect{p}_{l_i} \int_{V_i} \rho dV
+	\implies
+	\int_{V_i} (\vect{p}_i^* - \vect{p}_{l_i}) \rho dV = 0
+\]
+
+\paragraph{Rotational}
+
+\[
+	\frac{1}{2} \int_{V_i} \vect{r}_i^\trans \matr{S}^\trans(\vect{\omega}_i) \matr{S}(\vect{\omega}_i) \vect{r}_i \rho dV =
+	\frac{1}{2} \vect{\omega}_i^\trans \left( \int_{V_i} \matr{S}^\trans(\vect{r}_i) \matr{S}(\vect{r}_i) \rho dV \right) \vect{\omega}_i
+\]
+
+because of $\matr{S}(\vect{\omega}_i) \vect{r}_i = - \matr{S}(\vect{r}_i)\vect{\omega}_i$.
+
+Let us define
+
+\[ \matr{I}_{l_i} = \int_{V_i} \matr{S}^\trans(\vect{r}_i) \matr{S}(\vect{r}_i) \rho dV \]
+
+and we call it \textbf{inertia tensor}\index{inertia tensor} referred to the center of mass of the i-th link \underline{expressed in the base frame}.
+
+The \textbf{inertia tensor} is a symmetrical matrix $3 \times 3$ and its components are expressed as
+
+\[
+	\matr{I}_{l_i} =
+	\begin{bmatrix}
+		\int (r_{iy}^2 + r_{iz}^2) \rho dV & - \int r_{ix}r_{iy} \rho dV & - \int r_{ix}r_{iz} \rho dV \\
+		* & \int (r_{ix}^2 + r_{iz}^2) \rho dV & - \int r_{iy}r_{iz} \rho dV \\
+		* & * & \int (r_{ix}^2 + r_{iy}^2) \rho dV
+	\end{bmatrix}
+\]
