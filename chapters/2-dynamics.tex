@@ -1,4 +1,4 @@
-\usepackage{amsmath}\chapter{Robot dynamics}\label{ch:dynamics}
+\chapter{Robot dynamics}\label{ch:dynamics}
 
 To develop advance system of control and trajectory planning we need a dynamics representation of the robot, the bound between torques and the robot's motions.
 
@@ -259,10 +259,10 @@ we get the result
 where we can recognize
 
 \begin{conditions}
-	$b_{ii}$ & inertial moment as "seen" from the axis of the i-th joint \\
-	$b_{ij}$ & effect of the acceleration of j-th joint on the i-th joint \\
-	$h_{ijj}\dot{q}_j^2$ & centrifugal effect induced at i-th joint by the velocity of the j-th joint \\
-	$h_{ijk}\dot{q}_j\dot{q}_k$ & Coriolis effect induced at i-th joint by the velocity of the joints j and k \\
+	b_{ii} & inertial moment as "seen" from the axis of the i-th joint \\
+	b_{ij} & effect of the acceleration of j-th joint on the i-th joint \\
+	h_{ijj}\dot{q}_j^2 & centrifugal effect induced at i-th joint by the velocity of the j-th joint \\
+	h_{ijk}\dot{q}_j\dot{q}_k & Coriolis effect induced at i-th joint by the velocity of the joints j and k
 \end{conditions}
 
 Now, we can write the Lagrangian equations for all the joints in a matrix form as
