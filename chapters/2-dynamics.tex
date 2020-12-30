@@ -1,4 +1,4 @@
-\chapter{Robot dynamics}\label{ch:dynamics}
+\usepackage{amsmath}\chapter{Robot dynamics}\label{ch:dynamics}
 
 To develop advance system of control and trajectory planning we need a dynamics representation of the robot, the bound between torques and the robot's motions.
 
@@ -154,7 +154,8 @@ Now we can compute the sum for the kinetics energy (we consider $\mathcal{T}_{m_
 \[
 	\mathcal{T} =
 	\sum_{i=1}^n \mathcal{T}_{l_i} =
-	\frac{1}{2} \dq^\trans \matr{B}(\q) \dq
+	\frac{1}{2} \dq^\trans \matr{B}(\q) \dq =
+	\frac{1}{2} \sum_{i=1}^n \sum_{j=1}^n \dot{q}_i \dot{q}_j b_{ij}(\q)
 \]
 
 where $\matr{B}(\q)$ is called \textbf{inertia matrix}\index{inertia!matrix} and it is defined as
@@ -191,10 +192,130 @@ where $\vect{g}_0$ is the gravity acceleration vector expressed in the base fram
 
 \subsection{The Lagrangian}
 
-Now, we have $\mathcal{T}$ and $\mathcal{U}$ we can compute the Lagrangian function and solve the Lagrangian equation
+Now, we have $\mathcal{T}$ and $\mathcal{U}$, so we can finally compute the Lagrangian function and solve the Lagrangian equation
 
 \[
 	\mathcal{L}(\q,\dq) = \mathcal{T}(\q,\dq) - \mathcal{U}(\q) =
 	\frac{1}{2} \dq^\trans \matr{B}(\q) \dq + \sum_{i=1}^n m_i \vect{g}_0^\trans \vect{p}_i =
 	\frac{1}{2} \sum_{i=1}^n \sum_{j=1}^n \dot{q}_i \dot{q}_j b_{ij}(\q) + \sum_{i=1}^n m_i \vect{g}_0^\trans \vect{p}_i(\q)
 \]
+
+Let us consider the Lagrangian equation referring to a generic joint
+
+\begin{gather}
+    \frac{d}{dt}\frac{\partial \mathcal{L}}{\partial \dot{q}_i} - \frac{\partial \mathcal{L}}{\partial q_i} = \xi_i  \nonumber \\
+    \frac{d}{dt}\frac{\partial \mathcal{T}(\q,\dq)}{\partial \dot{q}_i} -
+    \frac{\partial \mathcal{T}(\q,\dq)}{\partial q_i} +
+    \frac{\partial \mathcal{U}(\q)}{\partial q_i} = \xi_i \label{eq:lagrange-kinetics-potential}
+\end{gather}
+
+Let us solve the three parts that compose the Lagrangian equation
+
+\begin{align*}
+    \frac{d}{dt}\frac{\partial \mathcal{T}(\q,\dq)}{\partial \dot{q}_i}
+    &= \frac{d}{dt}\frac{\partial}{\partial \dot{q}_i} \left( \frac{1}{2} \sum_{j=1}^n \sum_{k=1}^n \dot{q}_j \dot{q}_k b_{jk}(\q) \right) \\
+    &= \frac{d}{dt} \left( \sum_{j=1}^n \dot{q}_j b_{ij}(\q) \right) \\
+    &= \sum_{j=1}^n \ddot{q}_j b_{ij}(\q) + \sum_{j=1}^n \dot{q}_j \frac{d b_{ij}(\q)}{dt} \\
+	&= \sum_{j=1}^n \ddot{q}_j b_{ij}(\q) + \sum_{j=1}^n \dot{q}_j \sum_{k=1}^n \dot{q}_k \frac{\partial b_{ij}(\q)}{\partial q_k}
+\end{align*}
+
+\begin{align*}
+	\frac{\partial \mathcal{T}(\q,\dq)}{\partial q_i}
+	&= \frac{\partial}{\partial q_i} \left( \frac{1}{2} \sum_{j=1}^n \sum_{k=1}^n \dot{q}_j \dot{q}_k b_{jk}(\q) \right) \\
+	&= \frac{1}{2} \sum_{j=1}^n \sum_{k=1}^n \dot{q}_j \dot{q}_k \frac{\partial b_{jk}(\q)}{\partial q_i}
+\end{align*}
+
+\begin{align*}
+	\frac{\partial \mathcal{U}(\q)}{\partial q_i}
+	&= - \frac{\partial}{\partial q_i} \left(\sum_{j=1}^n m_j \vect{g}_0^\trans \vect{p}_j \right) \\
+	&= - \sum_{j=1}^n m_j \vect{g}_0^\trans \frac{\partial \vect{p}_j}{\partial q_i} \\
+	&= - \sum_{j=1}^n m_j \vect{g}_0^\trans \vect{J}_{P_i}^{(l_j)}(\q) \\
+	&= g_i(\q)
+\end{align*}
+
+So the Lagrange equation \ref{eq:lagrange-kinetics-potential} became
+
+\[
+	\sum_{j=1}^n \ddot{q}_j b_{ij}(\q) + \sum_{j=1}^n \dot{q}_j \sum_{k=1}^n \dot{q}_k \frac{\partial b_{ij}(\q)}{\partial q_k}
+	- \frac{1}{2} \sum_{j=1}^n \sum_{k=1}^n \dot{q}_j \dot{q}_k \frac{\partial b_{jk}(\q)}{\partial q_i} + g_i(\q) = \xi_i
+\]
+
+and if we rearrange the terms we get
+
+\[
+	\sum_{j=1}^n \ddot{q}_j b_{ij}(\q) + \sum_{j=1}^n \sum_{k=1}^n \dot{q}_j \dot{q}_k \left( \frac{\partial b_{ij}(\q)}{\partial q_k} - \frac{1}{2} \frac{\partial b_{jk}(\q)}{\partial q_i} \right) + g_i(\q) = \xi_i
+\]
+
+and defined
+
+\[ h_{ijk}(\q) = \frac{\partial b_{ij}(\q)}{\partial q_k} - \frac{1}{2} \frac{\partial b_{jk}(\q)}{\partial q_i} \]
+
+we get the result
+
+\[
+	\sum_{j=1}^n \ddot{q}_j b_{ij}(\q) + \sum_{j=1}^n \sum_{k=1}^n \dot{q}_j \dot{q}_k h_{ijk}(\q) + g_i(\q) = \xi_i
+\]
+
+where we can recognize
+
+\begin{conditions}
+	$b_{ii}$ & inertial moment as "seen" from the axis of the i-th joint \\
+	$b_{ij}$ & effect of the acceleration of j-th joint on the i-th joint \\
+	$h_{ijj}\dot{q}_j^2$ & centrifugal effect induced at i-th joint by the velocity of the j-th joint \\
+	$h_{ijk}\dot{q}_j\dot{q}_k$ & Coriolis effect induced at i-th joint by the velocity of the joints j and k \\
+\end{conditions}
+
+Now, we can write the Lagrangian equations for all the joints in a matrix form as
+
+\begin{equation}
+    \matr{B}(\q)\ddq + \matr{C}(\q,\dq)\dq + \vect{g}(\q) = \vect{\xi} \label{eq:dynamics-generalized-forces}
+\end{equation}
+
+\subsubsection{The matrix $\matr{C}$}
+
+The matrix $\matr{C}$ is not unique, and its elements must satisfy the equation
+
+\[
+	\sum_{j=1}^n c_{ij} \dot{q}_j = \sum_{j=1}^n \sum_{k=1}^n h_{ijk} \dot{q}_j \dot{q}_k
+\]
+
+A possible definition of $\matr{C}$ can be found with this process
+
+\begin{align*}
+    \sum_{j=1}^n c_{ij} \dot{q}_j &= \sum_{j=1}^n \sum_{k=1}^n h_{ijk} \dot{q}_j \dot{q}_k \\
+    &= \sum_{j=1}^n \sum_{k=1}^n  \dot{q}_j \dot{q}_k \left( \frac{\partial b_{ij}}{\partial q_k} - \frac{1}{2} \frac{\partial b_{jk}}{\partial q_i} \right) \\
+    &= \frac{1}{2} \sum_{j=1}^n \sum_{k=1}^n  \dot{q}_j \dot{q}_k \left( \frac{\partial b_{ij}}{\partial q_k} \right) +
+    \frac{1}{2} \sum_{j=1}^n \sum_{k=1}^n  \dot{q}_j \dot{q}_k \left( \frac{\partial b_{ik}}{\partial q_j} - \frac{\partial b_{jk}}{\partial q_i} \right)
+\end{align*}
+
+so the elements of $\matr{C}$ can be defined as
+
+\[
+	c_{ij} = \sum_{k=1}^n c_{ijk}\dot{q}_k
+\]
+with
+\[
+	c_{ijk} = \frac{1}{2} \left( \frac{\partial b_{ij}}{\partial q_k} + \frac{\partial b_{ik}}{\partial q_j} - \frac{\partial b_{jk}}{\partial q_i} \right)
+\]
+
+$c_{ijk}$ are called \textbf{Christoffel symbols}\index{Christoffel symbols} of the first kind
+
+\subsection{The non conservative forces}
+
+The last thing we have to do is include the forces acting on the system expressed as $\matr{\xi}$ in the \autoref{eq:dynamics-generalized-forces}.
+
+We can identify tree types of forces:
+
+\begin{itemize}
+	\item joint torques $\vect{\tau}$
+	\item viscous friction torques $-\matr{F}_\nu\dq$ \\
+		with $\matr{F}_\nu$ a diagonal matrix of viscous friction coefficients
+	\item static friction torques $-\matr{f}_s(\q,\dq)$ \\
+		with $\matr{f}_s$ function that models the static friction at the joints
+\end{itemize}
+
+If we include all these three forces in the \autoref{eq:dynamics-generalized-forces} we get
+
+\begin{equation}
+	\matr{B}(\q)\ddq + \matr{C}(\q,\dq)\dq + \matr{F}_\nu\dq + \matr{f}_s(\q,\dq) + \vect{g}(\q) = \vect{\tau} \label{eq:dynamics}
+\end{equation}
