@@ -271,7 +271,7 @@ Now, we can write the Lagrangian equations for all the joints in a matrix form a
     \matr{B}(\q)\ddq + \matr{C}(\q,\dq)\dq + \vect{g}(\q) = \vect{\xi} \label{eq:dynamics-generalized-forces}
 \end{equation}
 
-\subsubsection{The matrix $\matr{C}$}
+\subsubsection{The matrix $\matr{C}$}\label{subsubsec:matrix-c}
 
 The matrix $\matr{C}$ is not unique, and its elements must satisfy the equation
 
@@ -290,9 +290,9 @@ A possible definition of $\matr{C}$ can be found with this process
 
 so the elements of $\matr{C}$ can be defined as
 
-\[
-	c_{ij} = \sum_{k=1}^n c_{ijk}\dot{q}_k
-\]
+\begin{equation}
+    c_{ij} = \sum_{k=1}^n c_{ijk}\dot{q}_k \label{eq:matrix-c-coefficients}
+\end{equation}
 with
 \[
 	c_{ijk} = \frac{1}{2} \left( \frac{\partial b_{ij}}{\partial q_k} + \frac{\partial b_{ik}}{\partial q_j} - \frac{\partial b_{jk}}{\partial q_i} \right)
@@ -319,3 +319,82 @@ If we include all these three forces in the \autoref{eq:dynamics-generalized-for
 \begin{equation}
 	\matr{B}(\q)\ddq + \matr{C}(\q,\dq)\dq + \matr{F}_\nu\dq + \matr{f}_s(\q,\dq) + \vect{g}(\q) = \vect{\tau} \label{eq:dynamics}
 \end{equation}
+
+\subsection{Skew-symmetry of matrix $\dot{\matr{B}} - 2\matr{C}$}
+
+The derivation of the matrix $\matr{C}$ seen in the \autoref{subsubsec:matrix-c} allows us to derive a singularity property of the \autoref{eq:dynamics}.
+
+\[ \matr N(\q,\dq) = \dot{\matr B}(\q) - 2 \matr C(\q,\dq) \]
+
+this matrix satisfies the following property
+
+\[ \vect{w}^\trans \matr{N}(\q,\dq) \vect{w} = 0 \]
+
+To prove it, we take into account \autoref{eq:matrix-c-coefficients}
+
+\begin{align*}
+    c_{ij} &= \frac{1}{2} \sum_{k=1}^n  \left( \frac{\partial b_{ij}}{\partial q_k} + \frac{\partial b_{ik}}{\partial q_j} - \frac{\partial b_{jk}}{\partial q_i} \right)\dot{q}_k \\
+	&= \frac{1}{2} \sum_{k=1}^n \frac{\partial b_{ij}}{\partial q_k} \frac{d q_k}{dt} +
+    \frac{1}{2} \sum_{k=1}^n \left( \frac{\partial b_{ik}}{\partial q_j} - \frac{\partial b_{jk}}{\partial q_i} \right) \dot{q}_k \\
+    &= \frac{1}{2} \dot{b}_{ij} +
+    \frac{1}{2} \sum_{k=1}^n \left( \frac{\partial b_{ik}}{\partial q_j} - \frac{\partial b_{jk}}{\partial q_i} \right) \dot{q}_k \\
+\end{align*}
+
+So, we take the generic element
+
+\[
+	n_{ij} = \dot{b}_{ij} - 2 c_{ij} = - \sum_{k=1}^n \left( \frac{\partial b_{ik}}{\partial q_j} - \frac{\partial b_{jk}}{\partial q_i} \right) \dot{q}_k
+\]
+
+So, we can notice that  $n_{ij} = - n_{ji}$, then the property is demonstrated.
+
+As direct consequence we can state
+
+\begin{equation}
+    \dq^\trans \matr N(\q,\dq) \dq = 0 \label{eq:skew-symmetry-property}
+\end{equation}
+
+for any choice of the matrix $\matr C$.
+
+Let us try to find a physical interpretation to this property, let us consider the \textbf{principle of energy conservation}\index{principle of energy conservation}
+
+\begin{equation}
+    \frac{1}{2} \frac{d}{dt} (\dq^\trans \matr B(\q)\dq) = \dq^\trans \left( \vect \tau - \matr{F}_\nu\dq - \matr{f}_s(\q,\dq) - \vect{g}(\q) \right) \label{eq:conservation-principle}
+\end{equation}
+
+we consider the left side member, and we try to solve it
+
+\begin{align*}
+    \frac{1}{2} \frac{d}{dt} (\dq^\trans \matr B(\q)\dq) &= \frac{1}{2} \dq^\trans \dot{\matr B}(\q)\dq + \dq^\trans \matr B(\q)\ddq \\
+    \text{using $\matr B(\q)\ddq$ from \ref{eq:dynamics}} \qquad &= \frac{1}{2} \dq^\trans \dot{\matr B}(\q)\dq + \dq^\trans \left( \vect{\tau} - \matr{C}(\q,\dq)\dq - \matr{F}_\nu\dq - \matr{f}_s(\q,\dq) - \vect{g}(\q) \right) \\
+	&= \frac{1}{2} \dq^\trans \left( \dot{\matr B}(\q) - 2 \matr{C}(\q,\dq) \right)\dq + \dq^\trans \left( \vect{\tau} - \matr{F}_\nu\dq - \matr{f}_s(\q,\dq) - \vect{g}(\q) \right) \\
+    &= \frac{1}{2} \dq^\trans \matr N(\q,\dq) \dq + \dq^\trans \left( \vect{\tau} - \matr{F}_\nu\dq - \matr{f}_s(\q,\dq) - \vect{g}(\q) \right)
+\end{align*}
+
+We can notice that this equation coincides with the \autoref{eq:conservation-principle} only if the \autoref{eq:skew-symmetry-property} is satisfied.
+In conclusion, we can state that \autoref{eq:skew-symmetry-property} is satisfied for each matrix $\matr C$ because it is a direct consequence of the \textbf{principle of energy conservation} of the system.
+
+\subsection{Linearity in the dynamical parameters}
+
+If we assume a simplified function for the static friction function
+
+\[
+	\matr{f}_s(\q,\dq) = \matr F_s\sgn(\dq)
+\]
+
+it is possible to demonstrate that the  dynamic model of the manipulator is linear about a suitable set of dynamic parameters.
+In particular the Lagrangian can be written in the form
+
+\[
+	\mathcal{L} = \sum_{i=1}^n \left( \vect \beta_{\matthcal{T}_i}^\trans - \vect \beta_{\matthcal{U}_i}^\trans \right) \vect \pi_i
+\]
+
+where $\vect \pi_i$ is a vector of constant parameters associated to i-th joint (mass, inertia, static friction, \dots).
+If we solve the \textbf{Lagrangian equations} with the above Lagrangian we find that the linearity assumption is not lost, and we can write
+
+\[
+	\vect \tau = \matr Y(\q,\dq,\ddq)\vect \pi
+\]
+
+where $\vect \pi$ is the vector get by the concatenation of $\vect \pi_i$ and $\matr Y(\q,\dq,\ddq)$ is a matrix called \textbf{regression matrix}\index{regression matrix}.
+
