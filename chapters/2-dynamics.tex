@@ -386,7 +386,7 @@ it is possible to demonstrate that the  dynamic model of the manipulator is line
 In particular the Lagrangian can be written in the form
 
 \[
-	\mathcal{L} = \sum_{i=1}^n \left( \vect \beta_{\matthcal{T}_i}^\trans - \vect \beta_{\matthcal{U}_i}^\trans \right) \vect \pi_i
+	\mathcal{L} = \sum_{i=1}^n \left( \vect \beta_{\mathcal{T}_i}^\trans - \vect \beta_{\mathcal{U}_i}^\trans \right) \vect \pi_i
 \]
 
 where $\vect \pi_i$ is a vector of constant parameters associated to i-th joint (mass, inertia, static friction, \dots).
@@ -398,3 +398,94 @@ If we solve the \textbf{Lagrangian equations} with the above Lagrangian we find 
 
 where $\vect \pi$ is the vector get by the concatenation of $\vect \pi_i$ and $\matr Y(\q,\dq,\ddq)$ is a matrix called \textbf{regression matrix}\index{regression matrix}.
 
+\warning{Missing examples and parameters identification}
+
+\section{Newton-Euler formulation}
+
+An alternative way to derive a dynamics model of a manipulator is exploiting \textbf{Newton-Euler equations}\index{Newton-Euler equations}.
+As opposed to Lagrange formulation that is based on balance of energies, this kind of formulation is based on balances of forces and moments on each link.
+
+We have to solve the equations in a recursive way, propagating the velocity and acceleration from the base to the end effector and the forces and moments in the opposite way.
+
+For each joint we can find the following equations
+
+\begin{gather*}
+    \vect f_i - \vect f_{i+1} + m_i \vect g_0 = m_i \ddot{\vect p}_{C_i} \\
+    \vect \mu_i + \vect f_i \times \vect r_{i-1,C_i} - \vect \mu_{i+1} - \vect f_{i+1} \times \vect r_{i,C_i} = \matr I_i \dot{\omega}_i + \omega_i \times \matr I_i \omega_i
+\end{gather*}
+
+To include the generalized forces at joint we can write
+
+We have to define generalized forces at joint, velocity and acceleration for prismatic and rotational joint
+
+\paragraph{Prismatic}
+\begin{itemize}
+	\item generalized forces
+	\[ \vect \tau_i = \vect f_i^\trans \vect z_{i-1} + F_{v_i}\dot{d}_i + f_{s_i} \]
+
+	\item velocities
+	\begin{gather*}
+		\vect \omega_i = \vect \omega_{i-1} \\
+		\dot{\vect p}_i = \dot{\vect p}_{i-1} + \dot{d}_i \vect z_{i-1} + \vect \omega_i \times \vect r_{i-1,i}
+	\end{gather*}
+
+	\item accelerations
+	\begin{gather*}
+		\dot{\vect \omega}_i = \dot{\vect \omega}_{i-1} \\
+		\ddot{\vect p}_i = \ddot{\vect p}_{i-1} +
+		\ddot{d}_i \vect z_{i-1} + 2\dot d_i \vect \omega_i \times \vect z_{i-1} +
+		\dot{\vect \omega}_i \times \vect r_{i-1,i} + \vect \omega_i \times (\vect \omega_i \times \vect r_{i-1,i})
+	\end{gather*}
+\end{itemize}
+
+\paragraph{Rotational}
+\begin{itemize}
+	\item generalized forces
+	\[ \vect \tau_i = \vect \mu_i^\trans \vect z_{i-1} + F_{v_i}\dot{\theta}_i + f_{s_i} \]
+
+	\item velocities
+	\begin{gather*}
+		\vect \omega_i = \vect \omega_{i-1} + \dot{\theta}_i \vect z_{i-1} \\
+		\dot{\vect p}_i = \dot{\vect p}_{i-1} + \vect \omega_i \times \vect r_{i-1,i}
+	\end{gather*}
+
+	\item accelerations
+	\begin{gather*}
+		\dot{\vect \omega}_i = \dot{\vect \omega}_{i-1} + \ddot{\theta}_i \vect z_{i-1} + \dot \theta_i \vect \omega_{i-1} \times \vect z_{i-1}\\
+		\ddot{\vect p}_i = \ddot{\vect p}_{i-1} +
+		\dot{\vect \omega}_i \times \vect r_{i-1,i} + \vect \omega_i \times (\vect \omega_i \times \vect r_{i-1,i})
+	\end{gather*}
+\end{itemize}
+
+The terms $F_{v_i}$ and $f_{s_i}$ that appear in the generalized forces are respectively the coefficient of viscous friction, and the function that characterize the static friction.
+
+For both the joints types the acceleration of the center of mass is given by
+
+\[
+	\ddot{\vect p}_{C_i} = \ddot{\vect p}_i + \dot{\vect \omega}_i \times \vect r_{i,C_i} + \vect \omega_i \times (\vect \omega_i \times \vect r_{i,C_i})
+\]
+
+\subsection{The recursive algorithm}
+
+As we said above the \textbf{Newton-Euler formulation} is based on two kind of algorithm for the term propagation
+
+\paragraph{Forward recursion}
+
+from the base to the end effector, we propagate the velocities and accelerations.
+The initial condition is given by $\vect \omega_o, \ddot{\vect p}_0-\vect g_0, \dot{\vect \omega}_0$, then the elements $\vect \omega_i, \dot{\vect \omega}_i, \ddot{\vect p}_i, \ddot{\vect p}_{C_i}$ are calculated recursively until the end effector.
+
+\paragraph{Backward recursion}
+
+from the end effector to the base, we propagate the forces and moments.
+The initial condition is given by $\vect f_{n+1} = \vect f_e, \vect \mu_{n+1} = \vect \mu_e$, the elements $\vect f_i$ and $\vect \mu_i$ are calculated recursively until the base as
+
+\begin{align*}
+    \vect f_i &= \vect f_{i+1} + m_i \ddot{\vect p_{C_i}} \\
+	\vect \mu_i &= -\vect f_i \times \left( \vect r_{i-1,i} + \vect r_{i,C_i} \right) + \vect \mu_{i+1} + \vect f_{i+1} \times \vect r_{i,C_i} + \matr I_i \dot{\vect \omega}_i + \vect \omega_i \times \matr I_i \vect \omega_i
+\end{align*}
+
+\subsubsection{Optimization}
+
+Note that the entities $\vect r_{i-1,i}$, $\vect r_{i,C_i}$ and $\matr I_i$ being referred in the base frame are functions of the robot's pose, so they are not constant, so to improve the efficient of the algorithm is a good idea refer them to the link frame so as to make them constant.
+
+\warning{Missing examples}
