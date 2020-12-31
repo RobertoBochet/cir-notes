@@ -5,7 +5,8 @@
 \usepackage{amsmath}
 \usepackage{svg}
 \usepackage{tabularx}
-\usepackage{hyperref}
+\usepackage[pdfusetitle]{hyperref}
+
 
 \usepackage{geometry}
 \geometry{
@@ -69,14 +70,19 @@ bottom=30mm
 \newcommand{\warning}[1]{\textcolor{red}{WARNING #1}}
 
 \usepackage{imakeidx}
-\makeindex
+\makeindex[intoc]
 
-\title{Control of industrial robots\\Notes}
+\usepackage[backend=bibtex]{biblatex}
+\addbibresource{references.bib}
+
+\title{Control of industrial robots\\Notes\thanks{the whole document is based on \cite{cir-slides} and \cite{ssvo-robotics}}}
 \author{Roberto Bochet}
 
 \begin{document}
 
 \maketitle
+
+\printbibliography
 
 \tableofcontents
 
