@@ -94,7 +94,7 @@ Let us define
 
 \[ \matr{I}_{l_i} = \int_{V_i} \matr{S}^\trans(\vect{r}_i) \matr{S}(\vect{r}_i) \rho dV \]
 
-and we call it \textbf{inertia tensor}\index{inertia!tensor} referred to the center of mass of the i-th link \underline{expressed in the base frame}.
+we call it \textbf{inertia tensor}\index{inertia!tensor} referred to the center of mass of the i-th link \underline{expressed in the base frame}.
 
 The \textbf{inertia tensor} is a symmetrical matrix $3 \times 3$ and its components are expressed as
 
@@ -233,7 +233,7 @@ Let us solve the three parts that compose the Lagrangian equation
 	&= g_i(\q)
 \end{align*}
 
-So the Lagrange equation \ref{eq:lagrange-kinetics-potential} became
+So the Lagrange equation~\ref{eq:lagrange-kinetics-potential} became
 
 \[
 	\sum_{j=1}^n \ddot{q}_j b_{ij}(\q) + \sum_{j=1}^n \dot{q}_j \sum_{k=1}^n \dot{q}_k \frac{\partial b_{ij}(\q)}{\partial q_k}
@@ -320,7 +320,7 @@ If we include all these three forces in the \autoref{eq:dynamics-generalized-for
 	\matr{B}(\q)\ddq + \matr{C}(\q,\dq)\dq + \matr{F}_\nu\dq + \matr{f}_s(\q,\dq) + \vect{g}(\q) = \vect{\tau} \label{eq:dynamics}
 \end{equation}
 
-\subsection{Skew-symmetry of matrix $\dot{\matr{B}} - 2\matr{C}$}
+\subsection{Skew-symmetry of matrix \texorpdfstring{$\dot{\matr{B}} - 2\matr{C}$}{dB-2C}}
 
 The derivation of the matrix $\matr{C}$ seen in the \autoref{subsubsec:matrix-c} allows us to derive a singularity property of the \autoref{eq:dynamics}.
 
@@ -478,7 +478,6 @@ The initial condition is given by $\vect \omega_o, \ddot{\vect p}_0-\vect g_0, \
 
 from the end effector to the base, we propagate the forces and moments.
 The initial condition is given by $\vect f_{n+1} = \vect f_e, \vect \mu_{n+1} = \vect \mu_e$, the elements $\vect f_i$ and $\vect \mu_i$ are calculated recursively until the base as
-
 \begin{align*}
     \vect f_i &= \vect f_{i+1} + m_i \ddot{\vect p_{C_i}} \\
 	\vect \mu_i &= -\vect f_i \times \left( \vect r_{i-1,i} + \vect r_{i,C_i} \right) + \vect \mu_{i+1} + \vect f_{i+1} \times \vect r_{i,C_i} + \matr I_i \dot{\vect \omega}_i + \vect \omega_i \times \matr I_i \vect \omega_i
@@ -489,3 +488,60 @@ The initial condition is given by $\vect f_{n+1} = \vect f_e, \vect \mu_{n+1} = 
 Note that the entities $\vect r_{i-1,i}$, $\vect r_{i,C_i}$ and $\matr I_i$ being referred in the base frame are functions of the robot's pose, so they are not constant, so to improve the efficient of the algorithm is a good idea refer them to the link frame so as to make them constant.
 
 \warning{Missing examples}
+
+\section{Euler-Lagrange vs Newton-Euler}
+
+\paragraph{Euler-Lagrange formulation}
+
+\begin{itemize}
+	\item It is a systematic and easy to understand.
+	\item The returned formula is in a form in which the physical terms are separated (inertia matrix, Coriolis, centrifugal and gravitational).
+	All these elements are useful to design a controller.
+	\item It lends itself to the introduction into the model of more complex effects (like joint or link deformation).
+\end{itemize}
+
+\paragraph{Newton-Euler formulation}
+
+\begin{itemize}
+	\item It is a computational efficient recursive method.
+\end{itemize}
+
+\subsection{Computation of direct dynamics}
+
+In the computation \textbf{direct dynamics}\index{direct dynamics} problem given the joint torques $\vect \tau(t)$ we have to calculate the acceleration of the joint $\ddq(t)$ and eventually compute via integration methods also the speeds $\q(t)$ and positions $\q(t)$.
+This is essential to simulate the model.
+
+The \textbf{Euler-Lagrange formulation} can give an easy solution to this problem.
+We need to compute and invert this formula
+
+\[
+	\matr B(\q)\ddq + \vect n(\q,\dq) = \vect \tau
+\]
+
+where
+
+\[
+	\vect n(\q,\dq) = \matr C(\q,\dq)\dq + \vect g(\q) + \matr F_\nu \dq + \vect f_s(\q,\dq)
+\]
+
+so, inverting the function we get
+
+\begin{equation}
+    \ddq = \matr B^{-1}(\q) \left( \vect \tau - \vect n(\q,\dq) \right) \label{eq:direct-dynamics}
+\end{equation}
+
+Also exploiting \textbf{Newton-Euler formulation} we can easily find the matrix $\matr B(\q)$ and the vector $\vect n(\q,\dq)$ to solve the problem:
+
+Given the implementation of the \textbf{Newton-Euler script}\index{Newton-Euler script} $\vect \tau = NE(\q,\dq,\ddq)$, set $\ddq=0$ and use the current values of $\q$ and $\dq$ the computed $\tau$ is exactly the searched vector $\vect n(\q,\dq)$.
+
+Then we set $\vect g_0 = 0$ into the script and $\dq = 0$ in order to eliminate gravitation, Coriolis, centrifugal and friction effects.
+With $n$ interaction of the algorith we can compute the matrix $\matr B(\q)$ column by column imposing $\ddot q_i=1$ and $\ddot q_j=0, i \neq j$.
+
+So we can use always the \autoref{eq:direct-dynamics} with the computed parameters.
+
+\subsection{Computation of inverse dynamics}
+
+In the \textbf{inverse dynamics}\index{inverse dynamics} problem the joint accelerations $\ddq(t)$, speeds $\dq(t)$ and position $\q(t)$ are given, and we have to compute the law of $\vect \tau(t)$ to produce that motion.
+This bound is useful in the \textbf{trajectory planning} and \textbf{model based control}.
+
+An approach based on \textbf{Newton-Euler formulation} can be used to solve this problem efficiently.

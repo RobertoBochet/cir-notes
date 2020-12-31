@@ -7,7 +7,6 @@
 \usepackage{tabularx}
 \usepackage[pdfusetitle]{hyperref}
 
-
 \usepackage{geometry}
 \geometry{
 a4paper,
@@ -35,16 +34,13 @@ bottom=30mm
 \tikzstyle{gain} = [draw, isosceles triangle, minimum height = 3em, isosceles triangle apex angle=60]
 \tikzstyle{node} = [inner sep=0pt, outer sep=0pt, minimum size=0pt]
 
-
-\usepackage{amsmath,amssymb}
-
 \usepackage{bodegraph}
 
 \usetikzlibrary{intersections}
 \usetikzlibrary{calc}
 
 \setlength{\parindent}{0em}
-
+\setlength{\parskip}{0.5em}
 
 \newenvironment{conditions}
 {\par\vspace{\abovedisplayskip}\noindent\centering\begin{tabular}{>{$}r<{$} @{${}:{}$} l}}
@@ -73,7 +69,7 @@ bottom=30mm
 \usepackage{imakeidx}
 \makeindex[intoc]
 
-\usepackage[backend=bibtex]{biblatex}
+\usepackage[backend=biber]{biblatex}
 \addbibresource{references.bib}
 
 \title{Control of industrial robots\\Notes\thanks{the whole document is based on \cite{cir-slides} and \cite{ssvo-robotics}}}
