@@ -1,0 +1,88 @@
+\chapter{Centralized control}\label{ch:centralized-control}
+
+As opposed of the decentralized approach where each joint is controlled independently of each others, we can implement a control law based on \textbf{centralized approach}\index{centralized control approach} where the manipulator is controlled exploiting its overall model.
+This approach required obviously a model of the robot, but it generally guarantees better performance than the decentralized one.
+
+\begin{nb}as we saw in \autoref{sec:simplified-dynamic-model} for a \textbf{decentralized} control we stated that a high reduction ratios in transmissions between motors and joints is a fundamental requirement because this reduces the magnitude of the noise $\vect d$, if this decoupling effect is not guaranteed we must use the \textbf{centralized} approach.\end{nb}
+
+The \textbf{centralized control approach} allows us to develop several control schemes both in the joint space that in the operational one.
+
+\section{Control in joint space}
+
+In joint space control the design of the controller is done directly on the joints state.
+
+\subsection{Open loop}
+
+A first naive approach can be seen as an extension of a \textbf{decentralized controller} designed in the previous chapter.
+
+The idea is to compensate the noise $\vect d$ adding to the decentralized scheme an open loop controller fed with the desired joints functions $\bar{\q}, \bar{\dq}, \bar{\ddq}$.
+Yuo can see the scheme in \autoref{fig:open-loop}.
+
+The function of the feedforward controller can be designed from \autoref{eq:decentralized-noise} using as input the desired state
+
+\[
+	\hat{\vect d} = \matr N^{-1} \matr{\Delta B}(\bar\q) \matr N^{-1} \bar\ddq_m +\matr N^{-1} \matr{C}(\bar\q,\bar\dq) \matr N^{-1} \bar\dq_m + \matr N^{-1} \vect{g}(\bar\q)
+\]
+
+The calculation of $\hat{\vect d}$ is generally computationally expensive, so it is preferred to precalculate it offline $\hat{\vect d}$ if it is possible (i.e in the repeated trajectories).
+
+\begin{figure}[htb]
+	\centering
+	\resizebox{\textwidth}{!}{
+	\begin{tikzpicture}
+		\node [input] (iq_d) {};
+		\node [sum, right= 1cm of iq_d] (sum_e) {};
+		\node [block, right=0.6cm of sum_e, text width=2.3cm] (controller) {Decentralized\\controller};
+		\node [block, above=1cm of controller, text width=2cm, minimum height=1.5cm] (controller_ff) {Centralized feedforward action};
+		\node [sum, right=0.6cm of controller] (sum_dd) {};
+		\node [input] at ([yshift=-0.0cm] 0,0 |- controller_ff) (dq_d) {};
+		\node [input] at ([yshift=0.6cm] 0,0 |- controller_ff) (ddq_d) {};
+
+		\node [sum, right=1cm of sum_dd] (sum_i) {};
+		\node [sum, right=0.6cm of sum_i] (sum_f) {};
+		\node [block, right=0.6cm of sum_f] (inertial) {$\left(\matr J_m + \bar{\matr B}_r \right)^{-1}$};
+		\node [block, below=0.5cm of inertial] (dq2f) {$\matr D_m$};
+		\node [integrator, right=1cm of inertial] (ddq2dq) {};
+		\node [integrator, right=1cm of ddq2dq] (dq2q) {};
+		\node [output, right=1cm of dq2q] (output) {};
+		\node [block, above=0.5cm of inertial] (d_b) {$\matr N^{-1} \matr{\Delta B}(\q) \matr N^{-1}$};
+		\node [block, above=0.3cm of d_b] (d_c) {$\matr N^{-1} \matr{C}(\q,\dq) \matr N^{-1}$};
+		\node [block, above=0.3cm of d_c] (d_g) {$\matr N^{-1} \vect{g}(\q)$};
+		\node [sum] (sum_d) at (sum_i |- d_b) {};
+
+		\draw [->] (sum_dd) -- node {$\vect \tau_m$} (sum_i);
+		\draw [->] (sum_i) -- (sum_f);
+		\draw [->] (sum_f) -- (inertial);
+		\draw [->] (sum_d) -- node [pos=0.9] {$-$} node [pos=0.5] {$\vect d$} (sum_i);
+		\draw [->] (d_b) -- (sum_d);
+		\draw [->] (d_c) -- ++(-6em,0) -- (sum_d);
+		\draw [->] (d_g) -| (sum_d);
+		\draw [->] (inertial) -- node [pos=0.35] {$\ddq_m$} node [name=ddq, pos=0.65,inner sep=0] {}  (ddq2dq);
+		\draw [->] (ddq2dq) -- node [pos=0.35] {$\dq_m$} node [name=dq, pos=0.65,inner sep=0] {}  (dq2q);
+		\draw [->] (dq2q) -- node [name=q, pos=0.2,inner sep=0] {} node [pos=0.6] {$\q_m$}  (output);
+
+		\draw [->] (ddq) |- (d_b);
+		\draw [->] (dq) |- (d_c);
+		\draw [->] (q) |- (d_g);
+
+		\draw [->] (dq) |- (dq2f);
+		\draw [->] (dq2f) -| node [pos=0.9] {$-$} (sum_f);
+
+		\draw [->] (iq_d) -- node[pos=0.3] {$\bar{\q}_m$} node [name=q_d, pos=0.65, inner sep=0] {} (sum_e);
+		\draw [->] (sum_e) -- (controller);
+		\draw [->] (controller) -- (sum_dd);
+		\draw [->] ([yshift=0.6cm]controller_ff) -| node [pos=0.85] {$\hat{\vect d}$} (sum_dd);
+		\draw [->] (q) -- ++(0,-2.5) -| node [pos=0.9] {$-$} (sum_e);
+
+		\draw [->] (q_d) |- ([yshift=-0.6cm]controller_ff.west);
+		\draw [->] (dq_d) -- node[pos=0.1] {$\bar{\dq}_m$} (dq_d -| controller_ff.west);
+		\draw [->] (ddq_d) -- node[pos=0.1] {$\bar{\ddq}_m$} (ddq_d -| controller_ff.west);
+	\end{tikzpicture}
+	}
+	\caption{open loop feedforward $\vect d$ compensation}
+	\label{fig:open-loop}
+\end{figure}
+
+
+\section{Control in operational space}
+

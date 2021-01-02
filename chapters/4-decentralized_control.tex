@@ -8,7 +8,7 @@ it is a decentralized control approach where each joint is controlled independen
 
 \warning{Missing evaluation of control performance}
 
-\section{Simplified dynamic model}
+\section{Simplified dynamic model}\label{sec:simplified-dynamic-model}
 
 Let us consider a simplified dynamics model of the robots
 
@@ -70,10 +70,9 @@ Now we can combine the models of motors/transmissions and robots
 
 where
 
-\[
-    \vect d = \matr N^{-1} \matr{\Delta B}(\q) \matr N^{-1} \ddq_m +
-    \matr N^{-1} \matr{C}(\q,\dq) \matr N^{-1} \dq_m + \matr N^{-1} \vect{g}(\q)
-\]
+\begin{equation}
+    \vect d = \matr N^{-1} \matr{\Delta B}(\q) \matr N^{-1} \ddq_m +\matr N^{-1} \matr{C}(\q,\dq) \matr N^{-1} \dq_m + \matr N^{-1} \vect{g}(\q)\label{eq:decentralized-noise}
+\end{equation}
 
 We got a dynamics model where the motor torques $\vect \tau_m$ are the input, and the vector $\vect d$ is a non-linear function that we can treat as noise, you can see it in the \autoref{fig:mtj-model}.
 
@@ -90,9 +89,9 @@ The control loop for each joint is independent of each others.
     %\resizebox{\textwidth}{!}{
     \begin{tikzpicture}
         \node [input] (input) {};
-        \node [sum, right= 1cm of input] (sum_i) {};
-        \node [sum, right= 1cm of sum_i] (sum_f) {};
-        \node [block, right=1cm of sum_f] (inertial) {$\left(\matr J_m + \bar{\matr B}_r \right)^{-1}$};
+        \node [sum, right=1cm of input] (sum_i) {};
+        \node [sum, right=0.6cm of sum_i] (sum_f) {};
+        \node [block, right=0.6cm of sum_f] (inertial) {$\left(\matr J_m + \bar{\matr B}_r \right)^{-1}$};
         \node [block, below=0.5cm of inertial] (dq2f) {$\matr D_m$};
         \node [integrator, right=1cm of inertial] (ddq2dq) {};
         \node [integrator, right=1cm of ddq2dq] (dq2q) {};
@@ -107,7 +106,7 @@ The control loop for each joint is independent of each others.
         \draw [->] (sum_f) -- (inertial);
         \draw [->] (sum_d) -- node [pos=0.9] {$-$} node [pos=0.5] {$\vect d$} (sum_i);
         \draw [->] (d_b) -- (sum_d);
-        \draw [->] (d_c) -- ++  (-8em,0) -- (sum_d);
+        \draw [->] (d_c) -- ++(-6em,0) -- (sum_d);
         \draw [->] (d_g) -| (sum_d);
         \draw [->] (inertial) -- node [pos=0.35] {$\ddq_m$} node [name=ddq, pos=0.65,inner sep=0] {}  (ddq2dq);
         \draw [->] (ddq2dq) -- node [pos=0.35] {$\dq_m$} node [name=dq, pos=0.65,inner sep=0] {}  (dq2q);
