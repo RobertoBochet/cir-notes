@@ -5,6 +5,7 @@
 \usepackage{amsmath}
 \usepackage{svg}
 \usepackage{tabularx}
+\usepackage{soul}
 \usepackage[pdfusetitle]{hyperref}
 
 \usepackage{geometry}
@@ -23,7 +24,7 @@ bottom=30mm
 \usetikzlibrary{shapes,arrows}
 \usetikzlibrary{positioning}
 
-\tikzset{auto,>=latex', minimum size=0pt}
+\tikzset{auto,>=latex', minimum size=0pt, node distance=1cm}
 
 \tikzstyle{block} = [draw, fill=white, rectangle, minimum height=3em, minimum width=4em]
 \tikzstyle{integrator} = [draw, fill=white, rectangle, minimum height=3em, minimum width=2em, font={$\frac{1}{s}$}]
@@ -51,6 +52,7 @@ bottom=30mm
 \DeclareMathOperator{\im}{im}
 \DeclareMathOperator{\rad}{rad}
 \DeclareMathOperator{\sgn}{sgn}
+\DeclareMathOperator{\diag}{diag}
 
 \newcommand{\matr}[1]{\boldsymbol{#1}}
 \newcommand{\vect}[1]{\boldsymbol{#1}}

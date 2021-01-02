@@ -1,25 +1,129 @@
-\chapter{Decentralized control}
+\chapter{Decentralized control}\label{ch:decentralized-control}
 
-In the decentralized control each joint is controlled independently from each others
+Once a desired robot trajectory is designed, the next step is to guarantee that the real trajectory as close as possible to it.
+Practically we have to design a control strategy in order to $\q_d(t) \approx \q(t)$.
+
+The main way adopted in the control of industrial robot is the \textbf{independent joint control}\index{independent joint control} approach;
+it is a decentralized control approach where each joint is controlled independently of each other.
+
+\warning{Missing evaluation of control performance}
 
 \section{Simplified dynamic model}
 
-$$ \matr{B}(\q)\ddq + \matr{C}(\q,\dq)\dq + \vect{g}(\q) = \vect{\tau} $$
+Let us consider a simplified dynamics model of the robots
 
-In the model each joint have a motor; to simplify we consider just the effect related to its spinning around its own axis and a rigid transmission.
+\[
+    \matr{B}(\q)\ddq + \matr{C}(\q,\dq)\dq + \vect{g}(\q) = \vect{\tau}
+\]
 
-$$ J_{mi}\ddot{q}_{mi} + D_{mi}\dot{q}_{mi} = \tau_{mi} - \tau_{lmi} \quad i=1,\dotso,n $$
-$$ \tau_{lmi} = \tau_{li} / n_i $$
+In this model $\vect{\tau}, \q, \dq, \ddq$ are referred to the joints, but in a real system we cannot act directly on the joints variables, instead we have to consider that we can act only on the motors that are bound to the joints via a transmission.
+So we introduce a dynamics model for a generic rigid transmission and joint motor
 
+\begin{gather*}
+    J_{mi}\ddot{q}_{m_i} + D_{m_i}\dot{q}_{m_i} = \tau_{m_i} - \tau_{lm_i} \\
+    \tau_{lm_i} = \tau_{l_i} / n_i
+\end{gather*}
+where
 \begin{conditions}
-J_{mi} & moment of inertial of the motor \\
-D_{mi} & friction viscous coefficient of the motor \\
-\tau_{lmi} & load torque on the axis of the motor \\
-\tau_{li} & load torque on the axis of the joint \\
-n_i & transmission reduction rate between motor and joint
+    J_{m_i} & moment of inertial of the motor \\
+    D_{m_i} & friction viscous coefficient of the motor \\
+    \tau_{lm_i} & load torque on the axis of the motor \\
+    \tau_{l_i} & load torque on the axis of the joint \\
+    n_i & transmission reduction rate between motor and joint
 \end{conditions}
 
-\warning{missing dynamics model derivation}
+to simplify we considered just the effect related to its spinning around its own axis and a rigid transmission.
+
+Let us introduce the square matrix $\matr N = \diag\{n_i\}$ so we can write
+
+\[
+    \q_m = \matr N \q \qquad \vect \tau_{lm} = \matr N^{-1} \vect \tau
+\]
+
+Before we consider the entire model seen from the motor point of view, we observe that the matrix $\matr B(\q)$ can be seen as the sum of two contributes, the first of average inertia and the other of the residual as function of the pose $\q$
+
+\[
+    \matr B(\q) = \bar{\matr B} + \matr{\Delta B}(\q)
+\]
+
+Now we can combine the models of motors/transmissions and robots
+
+\begin{align*}
+    \matr J_m\ddq_m + \matr D_m \dq_m &= \vect \tau_m - \vect \tau_{lm} \\
+    \matr J_m\ddq_m + \matr D_m \dq_m + \matr N^{-1} \left( \matr{B}(\q)\ddq +
+    \matr{C}(\q,\dq)\dq + \vect{g}(\q) \right) &= \vect \tau_m \\
+    \intertext{replace the joints variables with motors ones} \\
+    \matr J_m\ddq_m + \matr D_m \dq_m + \matr N^{-1} \matr{B}(\q) \matr N^{-1} \ddq_m +
+    \matr N^{-1} \matr{C}(\q,\dq) \matr N^{-1} \dq_m +
+    \matr N^{-1} \vect{g}(\q) &= \vect \tau_m \\
+    \intertext{introduce the decomposition of $\matr B(\q)$} \\
+    \matr J_m\ddq_m + \matr D_m \dq_m + \matr N^{-1} \left(\bar{\matr B} + \matr{\Delta B}(\q)\right) \matr N^{-1} \ddq_m +
+    \matr N^{-1} \matr{C}(\q,\dq) \matr N^{-1} \dq_m +
+    \matr N^{-1} \vect{g}(\q) &= \vect \tau_m \\
+    (\matr J_m + \matr N^{-1} \bar{\matr B} \matr N^{-1} )\ddq_m + \matr D_m \dq_m + \hspace{7cm} \\
+    \matr N^{-1} \matr{\Delta B}(\q) \matr N^{-1} \ddq_m +
+    \matr N^{-1} \matr{C}(\q,\dq) \matr N^{-1} \dq_m +
+    \matr N^{-1} \vect{g}(\q) &= \vect \tau_m \\
+    \intertext{introduce the vector $\vect d$ and the matrix $\bar{\matr B}_r = \matr N^{-1} \bar{\matr B} \matr N^{-1}$} \\
+    \left(\matr J_m + \bar{\matr B}_r \right)\ddq_m + \matr D_m \dq_m + \vect d &= \vect \tau_m
+\end{align*}
+
+where
+
+\[
+    \vect d = \matr N^{-1} \matr{\Delta B}(\q) \matr N^{-1} \ddq_m +
+    \matr N^{-1} \matr{C}(\q,\dq) \matr N^{-1} \dq_m + \matr N^{-1} \vect{g}(\q)
+\]
+
+We got a dynamics model where the motor torques $\vect \tau_m$ are the input, and the vector $\vect d$ is a non-linear function that we can treat as noise, you can see it in the \autoref{fig:mtj-model}.
+
+\begin{nb}all the non-linearities are moved in the noise $\vect d$.\end{nb}
+\begin{nb}the bigger are the reduction ratios $n_i$, the less relevant the noise $\vect d$ is.\end{nb}
+
+So, the decentralized control approach treat each joint as a SISO linear model subject to a noise.
+The control loop for each joint is independent of each others.
+
+\ul{This method heavily relies on the assumption that the reduction ratios $n_i$ values are large} (generally true for industrial robotics manipulators), \ul{to can ignore the nonlinear contribution $\vect d$ in the controller design.}
+
+\begin{figure}[htb]
+    \centering
+    %\resizebox{\textwidth}{!}{
+    \begin{tikzpicture}
+        \node [input] (input) {};
+        \node [sum, right= 1cm of input] (sum_i) {};
+        \node [sum, right= 1cm of sum_i] (sum_f) {};
+        \node [block, right=1cm of sum_f] (inertial) {$\left(\matr J_m + \bar{\matr B}_r \right)^{-1}$};
+        \node [block, below=0.5cm of inertial] (dq2f) {$\matr D_m$};
+        \node [integrator, right=1cm of inertial] (ddq2dq) {};
+        \node [integrator, right=1cm of ddq2dq] (dq2q) {};
+        \node [output, right=1cm of dq2q] (output) {};
+        \node [block, above=0.5cm of inertial] (d_b) {$\matr N^{-1} \matr{\Delta B}(\q) \matr N^{-1}$};
+        \node [block, above=0.3cm of d_b] (d_c) {$\matr N^{-1} \matr{C}(\q,\dq) \matr N^{-1}$};
+        \node [block, above=0.3cm of d_c] (d_g) {$\matr N^{-1} \vect{g}(\q)$};
+        \node [sum] (sum_d) at (sum_i |- d_b)  {};
+
+        \draw [->] (input) -- node {$\vect \tau_m$} (sum_i);
+        \draw [->] (sum_i) -- (sum_f);
+        \draw [->] (sum_f) -- (inertial);
+        \draw [->] (sum_d) -- node [pos=0.9] {$-$} node [pos=0.5] {$\vect d$} (sum_i);
+        \draw [->] (d_b) -- (sum_d);
+        \draw [->] (d_c) -- ++  (-8em,0) -- (sum_d);
+        \draw [->] (d_g) -| (sum_d);
+        \draw [->] (inertial) -- node [pos=0.35] {$\ddq_m$} node [name=ddq, pos=0.65,inner sep=0] {}  (ddq2dq);
+        \draw [->] (ddq2dq) -- node [pos=0.35] {$\dq_m$} node [name=dq, pos=0.65,inner sep=0] {}  (dq2q);
+        \draw [->] (dq2q) -- node [name=q, pos=0.2,inner sep=0] {} node [pos=0.6] {$\q_m$}  (output);
+
+        \draw [->] (ddq) |- (d_b);
+        \draw [->] (dq) |- (d_c);
+        \draw [->] (q) |- (d_g);
+
+        \draw [->] (dq) |- (dq2f);
+        \draw [->] (dq2f) -| node [pos=0.9] {$-$} (sum_f);
+    \end{tikzpicture}
+    %}
+    \caption{motor-transmission-joint dynamics model \\ \begin{em}n.b.\ the arrows for the dependencies of noise functions are been omitted\end{em}}
+    \label{fig:mtj-model}
+\end{figure}
 
 \section{Electrical motor}
 
@@ -31,10 +135,10 @@ Let's consider a simple DC motor
     \tau_m(t) &= K i(t) = J_m \ddot{q}_m(t)
 \end{align*}
 
-\begin{figure}
+\begin{figure}[htb]
 \centering
 \resizebox{\textwidth}{!}{
-\begin{tikzpicture}[auto,>=latex', node distance=1cm]
+\begin{tikzpicture}
     \node [input] (input) {};
     \node [sum, right= 1cm of input] (sum_v) {};
     \node [block, right=0.6cm of sum_v] (v2i) {$\frac{1}{sL+R}$};
@@ -58,17 +162,20 @@ Let's consider a simple DC motor
 \label{fig:motor_model}
 \end{figure}
 
-\subsubsection{Control of the current}
+\subsection{Control of the current}
 
-We can close an high frequency (thousands $\rad/s$) loop for the current as it can been seen in \autoref{fig:motor_current_control}. $E$ is considered to change as a slowly varying disturbance, that the controller can effectively reject.
-From the point of view of the mechanical system the current loop is so fast to consider the current change is instantaneous. So for the mechanical control we can consider to control directly the motor torque
+We can close a high frequency (thousands $\rad/s$) loop for the current as it can be seen in \autoref{fig:motor_current_control}. $E$ is considered to change as a slowly varying disturbance, that the controller can effectively reject.
+From the point of view of the mechanical system the current loop is so fast to consider the current change is instantaneous.
+So for the mechanical control we can consider to control directly the motor torque
 
-$$\tau_m(t) = Ki(t) \approx K \bar{i}(t)$$
+\[
+    \tau_m(t) = Ki(t) \approx K \bar{i}(t)
+\]
 
-\begin{figure}
+\begin{figure}[htb]
 \centering
 \resizebox{\textwidth}{!}{
-\begin{tikzpicture}[auto,>=latex', node distance=1cm]
+\begin{tikzpicture}
     \node [input] (input) {};
     \node [sum, right= 1cm of input] (sum_e) {};
     \node [block, right=0.6cm of sum_e] (e2v) {$R_i(s)$};
@@ -99,28 +206,36 @@ $$\tau_m(t) = Ki(t) \approx K \bar{i}(t)$$
 
 \section{Rigid transmission approximation}
 
-For a rigid transmission we have the following system
+As we saw above, for a rigid transmission we have the following system
 
-$$ J_m\ddot{q}_m + d_m \dot{q}_m = \tau_m - \tau_{lm} $$
-$$ J_l\ddot{q}_l = n \tau_{lm} - \tau_l $$
-$$ q_m = n q_l $$
+\begin{gather*}
+    J_m\ddot{q}_m + d_m \dot{q}_m = \tau_m - \tau_{lm}\\
+    J_l\ddot{q}_l = n \tau_{lm} - \tau_l\\
+    q_m = n q_l\\
+\end{gather*}
 
 The first and the second equation can be merged exploiting the third equation
 
-$$ \left(J_m + \frac{J_l}{n^2}\right) \ddot{q}_m + d_m \dot{q}_m = \tau_m - \frac{\tau_l}{n} $$
+\[
+    \left(J_m + \frac{J_l}{n^2}\right) \ddot{q}_m + d_m \dot{q}_m = \tau_m - \frac{\tau_l}{n}
+\]
 
-The result model can been seen in the \autoref{fig:mechanical_system_rigid}
+The result model can be seen in the \autoref{fig:mechanical_system_rigid}
 
-$$ G_v(s) = \frac{1}{d_m + \left(J_m + \frac{J_l}{n^2}\right) s} = \frac{1/d_m}{1 + \frac{J_m + J_l/n^2}{d_m} s}  $$
+\[
+    G_v(s) = \frac{1}{d_m + \left(J_m + \frac{J_l}{n^2}\right) s} = \frac{1/d_m}{1 + \frac{J_m + J_l/n^2}{d_m} s}
+\]
 
 $d_m$ is an uncertain small parameter, since $d_m$ give a real stable pole we can consider the most conservative situation in which $d_m=0$, so we get
 
-$$ G_v(s) = \frac{1}{\left(J_m + \frac{J_l}{n^2}\right) s} $$
+\[
+    G_v(s) = \frac{1}{\left(J_m + \frac{J_l}{n^2}\right) s}
+\]
 
-\begin{figure}
+\begin{figure}[htb]
 \centering
 \resizebox{0.6\textwidth}{!}{%
-\begin{tikzpicture}[auto,>=latex']
+\begin{tikzpicture}
     \node [input, name=tau_m] {};
     \node [sum, right= 0.5cm of tau_m] (sum_tau) {};
     \node [block, above=0.5cm of sum_tau, scale=0.5] (taul2taulr) {$1/n$};
@@ -143,13 +258,12 @@ $$ G_v(s) = \frac{1}{\left(J_m + \frac{J_l}{n^2}\right) s} $$
 
 \subsection{P/PI control}
 
-In order to control position of the motor we can close in cascade two loop (in addition to the current loop). The first with a \textbf{PI} regulator on the motor speed and the second with an \textbf{P} regulator on the motor position as you can see in \autoref{fig:rigid_control_position}.
+In order to control position of the motor we can close in cascade two loop (also to the current loop).
+The first with a \textbf{PI} regulator on the motor speed and the second with an \textbf{P} regulator on the motor position as you can see in \autoref{fig:rigid_control_position}.
 
-\begin{em}
-n.b. in \autoref{fig:rigid_control_position} the current loop is omitted because, as we said before, the current loop has an much higher bandwidth than the speed loop so we can assume $\bar{\tau}_m=\tau_m$.
-\end{em}
+\begin{nb}in \autoref{fig:rigid_control_position} the current loop is omitted because, as we said before, the current loop has a much higher bandwidth than the speed loop, so we can assume $\bar{\tau}_m=\tau_m$.\end{nb}
 
-\begin{figure}
+\begin{figure}[htb]
 \centering
 \resizebox{\textwidth}{!}{
 \begin{tikzpicture}
@@ -187,41 +301,43 @@ n.b. in \autoref{fig:rigid_control_position} the current loop is omitted because
 
 As we stated the P/PI design is done with cascade approach, so as first step we can design the speed loop.
 
-$$
-R_{PI}(s) = k_{pv} \frac{1 + t_{iv} s}{s} \implies
-L_v(s) = \frac{k_{pv}}{\left(J_m + \frac{J_l}{n^2}\right)} \frac{1 + t_{iv} s}{s^2}
-$$
+\[
+    R_{PI}(s) = k_{pv} \frac{1 + t_{iv} s}{s} \implies
+    L_v(s) = \frac{k_{pv}}{\left(J_m + \frac{J_l}{n^2}\right)} \frac{1 + t_{iv} s}{s^2}
+\]
 
 We impose an $\omega_{cv}$ with $k_{pv}$
 
-$$ \omega_{cv}=\frac{k_{pv}}{\left(J_m + \frac{J_l}{n^2}\right)} $$
+\[ \omega_{cv}=\frac{k_{pv}}{\left(J_m + \frac{J_l}{n^2}\right)} \]
 
 and to guarantee that the $\omega_{cv}$ desired coincide with the effective one we have to put the zero in low frequency respect it
 
-$$ t_{iv} \approx \frac{1}{(0.1 \div 0.3)\omega_{cv}} $$
+\[ t_{iv} \approx \frac{1}{(0.1 \div 0.3)\omega_{cv}} \]
 
 With this regulator we get a close loop function for the speed loop 
 
-$$ F_v(s) \approx \frac{1}{1 + \frac{1}{\omega_{cv}}s} $$
+\[ F_v(s) \approx \frac{1}{1 + \frac{1}{\omega_{cv}}s} \]
 
 \subsubsection{P position control design}
 
 We can now design the $R_P(s)$ controller taking in account the speed closed loop designed above.
 
-$$
+\[
 R_{P}(s) = k_{pp} \implies
 L_p(s) = k_{pp} \frac{1}{s \left(1 + \frac{1}{\omega_{cv}} s\right)}
-$$
+\]
 
-if we choose $\omega_{cp} \ll \omega_{cv}$ is sufficient to impose $k_{pp} = \omega_{cp}$
+if we choose $\omega_{cp} \ll \omega_{cv}$ is enough to impose $k_{pp} = \omega_{cp}$
 
 The overall closed loop on the position guarantee null static error and a bandwidth of $\omega_{cp}$.
 
 \subsubsection{Speed feed-forward}
 
-A possible improvement of the \textbf{P/PI} scheme is the speed feed-forward scheme \autoref{fig:rigid_control_ff}. The block $k_{ff}s$ improves the speed of the response of the position control. The $k_{ff}$ coefficient is chosen between 0 and 1.
+A possible improvement of the \textbf{P/PI} scheme is the speed feed-forward scheme \autoref{fig:rigid_control_ff}.
+The block $k_{ff}s$ improves the speed of the response of the position control.
+The $k_{ff}$ coefficient is chosen between 0 and 1.
 
-\begin{figure}
+\begin{figure}[htb]
 \centering
 \resizebox{\textwidth}{!}{
 \begin{tikzpicture}
@@ -334,16 +450,19 @@ If only available the position measure but not the speed, it can be derived with
 
 \section{Elastic transmission}
 
-If we look only to the rigid transmission model we do not find significant limitations in the bandwidth of speed control, but from experimental data we can clearly find several limitation mainly bound to vibration, we have to improve the rigid model to take in account these limitations.
+If we look only to the rigid transmission model we do not find significant limitations in the bandwidth of speed control, but from experimental data we can clearly find several limitations mainly bound to vibration, we have to improve the rigid model to take in account these limitations.
 
-If we consider a elastic transmission we can write the following system
+If we consider an elastic transmission we can write the following system
 
-$$ J_m\ddot{q}_m + d_m \dot{q}_m = \tau_m - \tau_{lm} $$
-$$ J_l\ddot{q}_l = n \tau_{lm} - \tau_l $$
-$$ \tau_{lm} = k_{el}(q_m - n q_l) + d_{el}(\dot{q}_m - n \dot{q}_l) $$
+\begin{gather*}
+    J_m\ddot{q}_m + d_m \dot{q}_m = \tau_m - \tau_{lm}\\
+    J_l\ddot{q}_l = n \tau_{lm} - \tau_l\\
+    \tau_{lm} = k_{el}(q_m - n q_l) + d_{el}(\dot{q}_m - n \dot{q}_l)\\
+\end{gather*}
 
-The $G_v(s)$ now is composed from one real pole, two complex poles and two complex zeros; in particular we can find the parameter $\omega_z$ of the complex zeros as
+The $G_v(s)$ now is composed of one real pole, two complex poles and two complex zeros;
+in particular we can find the parameter $\omega_z$ of the complex zeros as
 
-$$\omega_z = \sqrt{\frac{k_{el}}{J_l}}$$
+\[\omega_z = \sqrt{\frac{k_{el}}{J_l}}\]
 
 and a reasonable choice for the speed closed loop bandwidth is $\omega_{cv} \approx 0.7 \omega_z$
