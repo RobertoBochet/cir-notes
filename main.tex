@@ -1,4 +1,4 @@
-\documentclass{report}
+\documentclass[12pt]{report}
 
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb}
@@ -24,7 +24,9 @@ bottom=30mm
 \usetikzlibrary{shapes,arrows}
 \usetikzlibrary{positioning}
 
-\tikzset{auto,>=latex', minimum size=0pt, node distance=1cm}
+\tikzset{auto,>=latex', minimum size=0pt, node distance=1cm, font=\fontsize{11}{11}\selectfont}
+
+\tikzset{fontscale/.style = {font=\fontsize{2}{2}}}
 
 \tikzstyle{block} = [draw, fill=white, rectangle, minimum height=3em, minimum width=4em, text centered, align=center]
 \tikzstyle{integrator} = [draw, fill=white, rectangle, minimum height=3em, minimum width=2em, font={$\frac{1}{s}$}]
@@ -33,7 +35,7 @@ bottom=30mm
 \tikzstyle{output} = [coordinate]
 \tikzstyle{pinstyle} = [pin edge={to-,thin,black}]
 \tikzstyle{gain} = [draw, isosceles triangle, minimum height = 3em, isosceles triangle apex angle=60]
-\tikzstyle{node} = [inner sep=0, outer sep=0, minimum size=0]
+\tikzstyle{spy} = [inner sep=0, outer sep=0, minimum size=0]
 
 %\usepackage{bodegraph}
 

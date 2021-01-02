@@ -12,9 +12,9 @@ it is a decentralized control approach where each joint is controlled independen
 
 Let us consider a simplified dynamics model of the robots
 
-\[
-    \matr{B}(\q)\ddq + \matr{C}(\q,\dq)\dq + \vect{g}(\q) = \vect{\tau}
-\]
+\begin{equation}
+    \matr{B}(\q)\ddq + \matr{C}(\q,\dq)\dq + \vect{g}(\q) = \vect{\tau}\label{eq:simplified-dynamics}
+\end{equation}
 
 In this model $\vect{\tau}, \q, \dq, \ddq$ are referred to the joints, but in a real system we cannot act directly on the joints variables, instead we have to consider that we can act only on the motors that are bound to the joints via a transmission.
 So we introduce a dynamics model for a generic rigid transmission and joint motor
@@ -388,7 +388,7 @@ If only available the position measure but not the speed, it can be derived with
     \node [block, above=.5cm of r_p] (ff) {$s$};
     \node [sum, right=.5cm of r_p] (sum_v) {};
     \node [block, below=.5cm of sum_v] (d) {$s$};
-    \node [node, below=.5cm of d] (fq_m) {};
+    \node [spy, below=.5cm of d] (fq_m) {};
     \node [block, right=.5cm of sum_v] (r_v) {$R_{PI}(s)$};
     \node [sum, right=1cm of r_v] (sum_tau) {};
     \node [block, above=.7cm of sum_tau, scale=.7] (taul2taulr) {$1/n$};
@@ -397,7 +397,7 @@ If only available the position measure but not the speed, it can be derived with
     \node [integrator, right=1cm of tau2dqm] (dqm2qm) {};
     \node [output, right=1cm of dqm2qm] (output) {};
     
-    \draw [draw,->] (input) -- node [pos=0.3] {$\bar{q}_m$} node [node, name=rqm, pos=0.7] {} (sum_p);
+    \draw [draw,->] (input) -- node [pos=0.3] {$\bar{q}_m$} node [spy, name=rqm, pos=0.7] {} (sum_p);
     \draw [->] (sum_p) -- (r_p);
     \draw [->] (r_p) -- (sum_v);
     \draw [->] (rqm) |- (ff);
@@ -432,7 +432,7 @@ If only available the position measure but not the speed, it can be derived with
     \node [integrator, right=1cm of tau2dqm] (dqm2qm) {};
     \node [output, right=1cm of dqm2qm] (output) {};
     
-    \draw [draw,->] (input) -- node [pos=0.3] {$\bar{q}_m$} node [node, name=rqm, pos=0.7] {} (sum_p);
+    \draw [draw,->] (input) -- node [pos=0.3] {$\bar{q}_m$} node [spy, name=rqm, pos=0.7] {} (sum_p);
     \draw [->] (sum_p) -- (r);
     \draw [->] (r) -- node {$\tau_m$} (sum_tau);
     \draw [->] (tau_l) -- node {$\tau_l$} (taul2taulr);

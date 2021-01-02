@@ -83,6 +83,101 @@ The calculation of $\hat{\vect d}$ is generally computationally expensive, so it
 	\label{fig:open-loop}
 \end{figure}
 
+\subsection{PD + gravity compensation}
+
+Let us consider again the simplified dynamics model \autoref{eq:simplified-dynamics} and we try to define a control law based on it to hold the given pose $\bar \q$.
+To design a proper control law we will exploit the \textbf{Lyapunov method}\index{Lyapunov method}
+Let us start defining the error function as
+
+\[
+	\tilde\q(t) = \bar \q - \q(t)
+\]
+
+and the \textbf{Lyapunov function}
+
+\[
+	V(\tilde\q, \dq) = \frac{1}{2} \dq^\trans \matr B(\q) \dq + \frac{1}{2} \tilde\q^\trans \matr K_P \tilde\q
+\]
+
+with $\matr K_P > 0$ and symmetrical.
+
+\begin{align*}
+    \dot V(\dq, \tilde\q) &= \dq^\trans \matr B(\q) \ddq + \frac{1}{2} \dq^\trans \dot{\matr B}(\q) \dq - \dq^\trans \matr K_P \tilde \q \\
+	\text{using \ref{eq:simplified-dynamics}}\qquad
+    &= \dq^\trans \left( \vect \tau - \matr C(\q,\dq)\dq -\vect g(\q) \right) + \frac{1}{2} \dq^\trans \dot{\matr B}(\q) \dq - \dq^\trans \matr K_P \tilde \q \\
+	&= \frac{1}{2} \dq^\trans \left( \dot{\matr B}(\q) - 2\matr C(\q,\dq) \right) \dq + \dq^\trans \left( \vect \tau -\vect g(\q) - \matr K_P \tilde \q \right) \\
+	\intertext{as we saw in \autoref{subsec:matrix-db-2c} the first term is equal to zero}
+    &= \dq^\trans \left( \vect \tau -\vect g(\q) - \matr K_P \tilde \q \right)
+\end{align*}
+
+if we impose the control law
+
+\begin{equation}
+    \vect \tau = \vect g(\q) + \matr K_P \tilde \q - \matr K_D\dq \label{eq:pd-g-control-law}
+\end{equation}
+
+with $\matr K_D > 0$ and symmetrical, so $\dot V$ became
+
+\[
+	\dot V(\dq, \tilde\q) = - \dq^\trans \matr K_D \dq
+\]
+
+the function $\dot V(\dq, \tilde\q)$ is semi-definite negative, but not definite negative (see the possible state $\dq = 0, \tilde\q \in \mathbb{R}$), so we have to study furthermore the asymptotically stability of the equilibrium $\dq=0$.
+We consider the dynamic system from \autoref{eq:simplified-dynamics} at the equilibrium $\dq=0$ with the control law from \autoref{eq:pd-g-control-law}
+
+\[
+	\matr{B}(\q)\ddq + \matr{C}(\q,\dq)\dq + \vect{g}(\q) = \vect g(\q) + \matr K_P \tilde \q - \matr K_D\dq
+\]
+
+and we get
+
+\[
+	\matr K_P \tilde \q = 0 \implies \tilde \q = 0
+\]
+
+then for the \textbf{Krasowski - La Salle Lemma} we can state that the system with the control law from \autoref{eq:pd-g-control-law} is globally asyntotically stable with the unique equilibrium in $\q = \bar \q$.
+This result is valid only if gravity contribution $\vect g(\q)$ is perfectly compensated from the designed control law.
+
+You can see the implemented control system in the \autoref{fig:pd-gravity}.
+
+\begin{figure}[htb]
+	\centering
+	%\resizebox{\textwidth}{!}{
+	\begin{tikzpicture}
+		\node [input] (iq_d) {};
+
+		\node [sum, right=1cm of iq_d] (sum_e) {};
+		\node [block, right=0.6cm of sum_e] (kp) {$\matr K_P$};
+		\node [sum, right=0.6cm of kp] (sum_d) {};
+		\node [sum, right=0.6cm of sum_d] (sum_g) {};
+		\node [block, right=1cm of sum_g] (robot) {$Robot$};
+		\node [block, above left=0.6cm and -1cm of robot] (kd) {$\matr K_D$};
+		\node [block, below left=0.6cm and -1cm of robot] (g) {$\vect g(\cdot)$};
+
+		\node [output, right=1cm of robot, yshift=0.3cm] (odq) {};
+		\node [output, right=1cm of robot, yshift=-0.3cm] (oq) {};
+
+		\draw [->] (iq_d) -- node[pos=0.2] {$\bar{\q}$} (sum_e);
+
+		\draw [->] (sum_e) -- (kp);
+		\draw [->] (kp) -- (sum_d);
+		\draw [->] (sum_d) -- (sum_g);
+		\draw [->] (sum_g) -- node {$\vect \tau$} (robot);
+
+		\draw [->] (robot.east |- odq) -- node [pos=0.7] {$\dq$} node [spy, name=dq, pos=0.3] {}  (odq);
+		\draw [->] (robot.east |- oq) -- node [pos=0.7] {$\q$} node [spy, name=q, pos=0.3] {} (oq);
+
+		\draw [->] (q) |- (g);
+		\draw [->] (g) -| (sum_g);
+
+		\draw [->] (dq) |- (kd);
+		\draw [->] (kd) -| node[pos=0.9] {$-$} (sum_d);
+		\draw [->] (q) -- ++(0,-2.5) -| node[pos=0.95] {$-$} (sum_e);
+	\end{tikzpicture}
+	%}
+	\caption{Closed loop with PD and gravity compensation}
+	\label{fig:pd-gravity}
+\end{figure}
 
 \section{Control in operational space}
 
