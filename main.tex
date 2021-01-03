@@ -26,8 +26,6 @@ bottom=30mm
 
 \tikzset{auto,>=latex', minimum size=0pt, node distance=1cm, font=\fontsize{11}{11}\selectfont}
 
-\tikzset{fontscale/.style = {font=\fontsize{2}{2}}}
-
 \tikzstyle{block} = [draw, fill=white, rectangle, minimum height=3em, minimum width=4em, text centered, align=center]
 \tikzstyle{integrator} = [draw, fill=white, rectangle, minimum height=3em, minimum width=2em, font={$\frac{1}{s}$}]
 \tikzstyle{sum} = [draw, fill=white, circle, node distance=1cm]
@@ -35,7 +33,8 @@ bottom=30mm
 \tikzstyle{output} = [coordinate]
 \tikzstyle{pinstyle} = [pin edge={to-,thin,black}]
 \tikzstyle{gain} = [draw, isosceles triangle, minimum height = 3em, isosceles triangle apex angle=60]
-\tikzstyle{spy} = [inner sep=0, outer sep=0, minimum size=0]
+\tikzstyle{spy} = [coordinate, inner sep=0, outer sep=0, minimum size=0]
+\tikzstyle{node} = [draw, circle, fill, minimum size=2pt, inner sep=0pt, outer sep=0pt, anchor=center]
 
 %\usepackage{bodegraph}
 
@@ -51,6 +50,7 @@ bottom=30mm
 
 \newenvironment{nb}{\par\vspace{\abovedisplayskip}\noindent\begin{em}n.b.\ \ignorespaces}{\end{em}}
 
+
 \DeclareMathOperator{\im}{im}
 \DeclareMathOperator{\rad}{rad}
 \DeclareMathOperator{\sgn}{sgn}
@@ -60,13 +60,41 @@ bottom=30mm
 \newcommand{\vect}[1]{\boldsymbol{#1}}
 
 \newcommand{\trans}{\mathsf{T}}
+\newcommand{\inv}{{-1}}
 \newcommand{\psinv}{\dag}
 \newcommand\norm[1]{\left\lVert#1\right\rVert}
 
+\newcommand{\I}{\matr{I}}
+\newcommand{\0}{\matr{0}}
+
 \newcommand{\J}{\matr{J}}
+
+\newcommand{\B}{\matr{B}}
+\newcommand{\dB}{\dot\B}
+\newcommand{\Bs}{\hat\B}
+\newcommand{\Be}{\tilde\B}
+
+\newcommand{\n}{\vect{n}}
+\newcommand{\ns}{\hat\n}
+\newcommand{\ner}{\tilde\n} % #r becuase ne already exists
+
+\newcommand{\K}{\matr{K}}
+
+\newcommand{\y}{\vect{y}}
+\newcommand{\dy}{\dot{\y}}
+\newcommand{\ddy}{\ddot{\y}}
+
 \newcommand{\q}{\vect{q}}
 \newcommand{\dq}{\dot{\q}}
 \newcommand{\ddq}{\ddot{\q}}
+
+\newcommand{\qd}{\bar{\q}}
+\newcommand{\dqd}{\dot{\bar{\q}}}
+\newcommand{\ddqd}{\ddot{\bar{\q}}}
+
+\newcommand{\qe}{\tilde{\q}}
+\newcommand{\dqe}{\dot{\tilde{\q}}}
+\newcommand{\ddqe}{\ddot{\tilde{\q}}}
 
 \newcommand{\warning}[1]{\textcolor{red}{WARNING #1}}
 

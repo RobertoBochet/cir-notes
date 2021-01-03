@@ -15,13 +15,13 @@ In joint space control the design of the controller is done directly on the join
 
 A first naive approach can be seen as an extension of a \textbf{decentralized controller} designed in the previous chapter.
 
-The idea is to compensate the noise $\vect d$ adding to the decentralized scheme an open loop controller fed with the desired joints functions $\bar{\q}, \bar{\dq}, \bar{\ddq}$.
+The idea is to compensate the noise $\vect d$ adding to the decentralized scheme an open loop controller fed with the desired joints functions $\qd, \dqd, \ddqd$.
 Yuo can see the scheme in \autoref{fig:open-loop}.
 
 The function of the feedforward controller can be designed from \autoref{eq:decentralized-noise} using as input the desired state
 
 \[
-	\hat{\vect d} = \matr N^{-1} \matr{\Delta B}(\bar\q) \matr N^{-1} \bar\ddq_m +\matr N^{-1} \matr{C}(\bar\q,\bar\dq) \matr N^{-1} \bar\dq_m + \matr N^{-1} \vect{g}(\bar\q)
+	\hat{\vect d} = \matr N^{-1} \matr{\Delta B}(\qd) \matr N^{-1} \ddqd_m +\matr N^{-1} \matr{C}(\qd,\dqd) \matr N^{-1} \dqd_m + \matr N^{-1} \vect{g}(\qd)
 \]
 
 The calculation of $\hat{\vect d}$ is generally computationally expensive, so it is preferred to precalculate it offline $\hat{\vect d}$ if it is possible (i.e in the repeated trajectories).
@@ -68,15 +68,15 @@ The calculation of $\hat{\vect d}$ is generally computationally expensive, so it
 		\draw [->] (dq) |- (dq2f);
 		\draw [->] (dq2f) -| node [pos=0.9] {$-$} (sum_f);
 
-		\draw [->] (iq_d) -- node[pos=0.3] {$\bar{\q}_m$} node [name=q_d, pos=0.65, inner sep=0] {} (sum_e);
+		\draw [->] (iq_d) -- node[pos=0.3] {$\qd_m$} node [name=q_d, pos=0.65, inner sep=0] {} (sum_e);
 		\draw [->] (sum_e) -- (controller);
 		\draw [->] (controller) -- (sum_dd);
 		\draw [->] ([yshift=0.6cm]controller_ff) -| node [pos=0.85] {$\hat{\vect d}$} (sum_dd);
 		\draw [->] (q) -- ++(0,-2.5) -| node [pos=0.9] {$-$} (sum_e);
 
 		\draw [->] (q_d) |- ([yshift=-0.6cm]controller_ff.west);
-		\draw [->] (dq_d) -- node[pos=0.1] {$\bar{\dq}_m$} (dq_d -| controller_ff.west);
-		\draw [->] (ddq_d) -- node[pos=0.1] {$\bar{\ddq}_m$} (ddq_d -| controller_ff.west);
+		\draw [->] (dq_d) -- node[pos=0.1] {$\dqd_m$} (dq_d -| controller_ff.west);
+		\draw [->] (ddq_d) -- node[pos=0.1] {$\ddqd_m$} (ddq_d -| controller_ff.west);
 	\end{tikzpicture}
 	}
 	\caption{open loop feedforward $\vect d$ compensation}
@@ -90,19 +90,19 @@ To design a proper control law we will exploit the \textbf{Lyapunov method}\inde
 Let us start defining the error function as
 
 \[
-	\tilde\q(t) = \bar \q - \q(t)
+	\qe(t) = \bar \q - \q(t)
 \]
 
 and the \textbf{Lyapunov function}
 
 \[
-	V(\tilde\q, \dq) = \frac{1}{2} \dq^\trans \matr B(\q) \dq + \frac{1}{2} \tilde\q^\trans \matr K_P \tilde\q
+	V(\qe, \dq) = \frac{1}{2} \dq^\trans \matr B(\q) \dq + \frac{1}{2} \qe^\trans \matr K_P \qe
 \]
 
 with $\matr K_P > 0$ and symmetrical.
 
 \begin{align*}
-    \dot V(\dq, \tilde\q) &= \dq^\trans \matr B(\q) \ddq + \frac{1}{2} \dq^\trans \dot{\matr B}(\q) \dq - \dq^\trans \matr K_P \tilde \q \\
+    \dot V(\dq, \qe) &= \dq^\trans \matr B(\q) \ddq + \frac{1}{2} \dq^\trans \dot{\matr B}(\q) \dq - \dq^\trans \matr K_P \tilde \q \\
 	\text{using \ref{eq:simplified-dynamics}}\qquad
     &= \dq^\trans \left( \vect \tau - \matr C(\q,\dq)\dq -\vect g(\q) \right) + \frac{1}{2} \dq^\trans \dot{\matr B}(\q) \dq - \dq^\trans \matr K_P \tilde \q \\
 	&= \frac{1}{2} \dq^\trans \left( \dot{\matr B}(\q) - 2\matr C(\q,\dq) \right) \dq + \dq^\trans \left( \vect \tau -\vect g(\q) - \matr K_P \tilde \q \right) \\
@@ -119,10 +119,10 @@ if we impose the control law
 with $\matr K_D > 0$ and symmetrical, so $\dot V$ became
 
 \[
-	\dot V(\dq, \tilde\q) = - \dq^\trans \matr K_D \dq
+	\dot V(\dq, \qe) = - \dq^\trans \matr K_D \dq
 \]
 
-the function $\dot V(\dq, \tilde\q)$ is semi-definite negative, but not definite negative (see the possible state $\dq = 0, \tilde\q \in \mathbb{R}$), so we have to study furthermore the asymptotically stability of the equilibrium $\dq=0$.
+the function $\dot V(\dq, \qe)$ is semi-definite negative, but not definite negative (see the possible state $\dq = 0, \qe \in \mathbb{R}$), so we have to study furthermore the asymptotically stability of the equilibrium $\dq=0$.
 We consider the dynamic system from \autoref{eq:simplified-dynamics} at the equilibrium $\dq=0$ with the control law from \autoref{eq:pd-g-control-law}
 
 \[
@@ -139,6 +139,8 @@ then for the \textbf{Krasowski - La Salle Lemma} we can state that the system wi
 This result is valid only if gravity contribution $\vect g(\q)$ is perfectly compensated from the designed control law.
 
 You can see the implemented control system in the \autoref{fig:pd-gravity}.
+
+\begin{nb}with this kind of regulator we do not have control on the time history with which the error $\tilde \q(t)$ goes to zero, so this way is not practicable if we want track a trajectory\end{nb}
 
 \begin{figure}[htb]
 	\centering
@@ -177,6 +179,398 @@ You can see the implemented control system in the \autoref{fig:pd-gravity}.
 	%}
 	\caption{Closed loop with PD and gravity compensation}
 	\label{fig:pd-gravity}
+\end{figure}
+
+\subsection{Inverse dynamics control}
+
+Let us try to solve the problem of the trajectory tracking.
+we rewrite the \autoref{eq:simplified-dynamics} in the form
+
+\[
+	\matr{B}(\q)\ddq + \vect n(\q,\dq) = \vect \tau
+\]
+
+with
+
+\[
+	\vect n(\q,\dq) = \matr{C}(\q,\dq)\dq + \vect{g}(\q)
+\]
+
+If $\matr B(\q)$ is full rank for each configuration of the manipulator we can define the control law called \textbf{inverse dynamics}\index{inverse dynamics}
+
+\[
+	\vect \tau = \matr{B}(\q)\vect y + \vect n(\q,\dq)
+\]
+
+so, if the system knowledge is perfect, this law impose the dynamics $\ddq = \vect y$;
+from the extern the overall system appears as a double integrator.
+
+Now we can design a control law for the function $\vect y$, a valid choice can be a \textbf{decoupled PD controller}\index{decoupled PD controller}
+
+\begin{equation}
+    \vect y = \matr K_P \qe + \matr K_I \dqe + \ddqd\label{eq:inverse-dynamics-control-law}
+\end{equation}
+
+that imposes the error dynamics
+
+\[
+	\ddqe + \matr K_D \dqe + \matr K_P \qe = 0
+\]
+
+then, the error $\qe$ is characterized by a second order dynamics that can be arbitrarily assigned by suitable choice of the parameters of the diagonal matrices $\matr K_P$ and $\matr K_I$.
+This allows us to use this technique to track an assigned trajectory.
+
+You can see the implementation of this control in \autoref{fig:inverse-dynamics-control}.
+
+\begin{nb}this technique requires perfect knowledge of the dynamic model, which might be difficult in practice\end{nb}
+
+\begin{figure}[htb]
+	\centering
+	\resizebox{\textwidth}{!}{
+	\begin{tikzpicture}
+		\node [input] (iq_d) {};
+		\node [input, above=1.5cm of iq_d] (idq_d) {};
+		\node [input, above=1.5cm of idq_d] (iddq_d) {};
+
+		\node [sum, right=1.5cm of iq_d] (sum_e) {};
+		\node [sum, right=0.8cm of idq_d] (sum_de) {};
+
+		\node [block, right=1cm of sum_e] (kp) {$\matr K_P$};
+		\node [block] at (sum_de -| kp) (kd) {$\matr K_D$};
+
+		\node [spy, right=0.5cm of kd] (bend) {};
+		\node [sum, right=1.5cm of kd] (sum_y) {};
+
+		\node [block, right=1cm of sum_y] (b) {$\matr B(\cdot)$};
+		\node [sum, right=1cm of b] (sum_t) {};
+		\node [block, right=1cm of sum_t] (robot) {Robot};
+
+		\node [block, below=0.5cm of robot] (n) {$\vect n(\cdot,\cdot)$};
+
+		\node [output, right=1.5cm of robot, yshift=0.3cm] (odq) {};
+		\node [output, right=1.5cm of robot, yshift=-0.3cm] (oq) {};
+
+		\node [node, below=0.3cm of n, xshift=0.4cm] (n_q) {};
+		\node [node, below=0.6cm of n, xshift=-0.4cm] (n_dq) {};
+		\node [node] at (n_q -| b) (b_q) {};
+
+		\draw [->] (iq_d) -- node [pos=0.2] {$\qd$} (sum_e);
+		\draw [->] (idq_d) -- node [pos=0.3] {$\dqd$} (sum_de);
+		\draw [->] (iddq_d) -- node [pos=0.05] {$\ddqd$} (bend |- iddq_d) -- (sum_y);
+
+		\draw [->] (sum_e) -- node [pos=0.2] {$\qe$} (kp);
+		\draw [->] (sum_de) -- node [pos=0.2] {$\dqe$} (kd);
+
+		\draw [->] (kp) -- (bend |- kp) -- (sum_y);
+		\draw [->] (kd) -- (sum_y);
+
+		\draw [->] (sum_y) -- node {$\vect y$} (b);
+		\draw [->] (b) -- (sum_t);
+		\draw [->] (sum_t) -- node {$\vect \tau$} (robot);
+
+		\draw [->] (robot.east |- odq) -- node [pos=0.8] {$\dq$} node [node, name=dq, pos=0.6] {} (odq);
+		\draw [->] (robot.east |- oq) -- node [pos=0.8, below] {$\q$} node [node, name=q, pos=0.3] {} (oq);
+
+		\draw [->] (n) -| (sum_t);
+
+		\draw [->] (q) |- (n_q) -- (b_q) -| node [pos=0.95] {$-$} (sum_e);
+		\draw [->] (dq) |- (n_dq)  -| node [pos=0.95] {$-$} (sum_de);
+
+		\draw [->] (n_q) -- (n_q |- n.south);
+		\draw [->] (n_dq) -- (n_dq |- n.south);
+		\draw [->] (b_q) -- (b_q |- b.south);
+	\end{tikzpicture}
+	}
+	\caption{Closed loop with inverse dynamics control}
+	\label{fig:inverse-dynamics-control}
+\end{figure}
+
+\subsubsection{Taking into account the uncertainty}
+
+As we saw in above the inverse dynamics control required perfect knowledge of the dynamics model of the robot, this is unrealistic in real robots, so we have to take into account the \textbf{model uncertainty}\index{model!uncertainty}.
+
+Let us consider a more realist control law
+
+\[
+	\vect \tau = \Bs(\q) \vect y + \ns(\q,\dq)
+\]
+
+so the compensated system become
+
+\[
+	\B(\q)\ddq + \n(\q,\dq) = \Bs(\q) \y + \ns(\q,\dq)
+\]
+
+Let us define the \textbf{uncertainty} as
+
+\[
+	\Be(\q) = \Bs(\q) - \B(\q), \qquad
+	\ner(\q,\dq) = \ns(\q, \dq) - \n(\q, \dq)
+\]
+
+still under the assumption that $\B(\q)$ is invertible, for $\ddq$ we can write
+
+\[
+	\ddq = \vect y - \vect \eta
+\]
+
+where
+
+\[
+	\vect\eta = \left( \I - \B^{-1} \Bs  \right)\y - \B^\inv \ner(\q,\dq)
+\]
+
+If we adopt the same control law we saw before in \autoref{eq:inverse-dynamics-control-law}, the error dynamic become
+
+\[
+	\ddqe + \matr K_D \dqe + \matr K_P \qe = \vect\eta
+\]
+
+the system still nonlinear, so we have to add in addiction to the PD controller a nonlinear term, function of the error to improve the robustness of the final system.
+
+Let us define the second order derivative of the error
+
+\[
+	\ddqe = \ddqd - \ddq = \ddqd - \y + \vect \eta
+\]
+
+we define a new system whose state are the errors
+
+\[
+	\vect \xi = \begin{bmatrix} \qe^\trans \\ \dqe^\trans \end{bmatrix}
+\]
+
+and the dynamics is defined by
+
+\[
+	\dot{\vect\xi} = \matr H \vect\xi + \matr D \left( \ddqd - \y + \vect\eta \right)
+\]
+
+with
+
+\[
+	\matr H = \begin{bmatrix}\0&\I\\\0&\0\end{bmatrix} \in \mathbb{R}^{2n \times 2n}, \qquad
+	\matr D = \begin{bmatrix}\0\\\I\end{bmatrix} \in \mathbb{R}^{2n \times n}
+\]
+
+Before we go any further, we need to characterize the uncertainty with three assumptions
+
+\begin{itemize}
+	\item $\sup_{t\ge0}\norm{\ddqd} < Q_M < \infty \qquad \forall \ddqd$
+
+	This assumption requires that the required acceleration is not infinite.
+	It is obviously always verified, because a planned trajectory will never require an unlimited acceleration.
+
+	\item $\norm{\I - \B^\inv \Bs} \le \alpha < 1 \qquad \forall \q$
+
+	A matrix $\B$ is definite positive and it is lower and upper bound, so the following equation is always valid
+	\[ 0 < B_m \le \norm{\B^\inv} \le B_M < \infty \]
+	then, we can impose
+ 	\[ \Bs = \frac{2}{B_M+B_m}\I \]
+	that always satisfy the assumption
+	\[ \norm{\I - \B^\inv \Bs} \le \frac{B_M-B_m}{B_M+B_m} < 1 \]
+	\begin{nb}$\Bs = \B \implies \alpha = 0$\end{nb}
+
+	\item $\norm{\ner} \le \Phi(\norm{\vect\xi}) < \infty \qquad \forall \q,\dq$
+
+	We can choose the form
+	\[ \Phi(\norm{\vect\xi}) = \alpha_0 + \alpha_1 \norm{\vect\xi} + \alpha_2 \norm{\vect\xi}^2 \]
+\end{itemize}
+
+We add a term to the control law \autoref{eq:inverse-dynamics-control-law}
+
+\[
+	\y = \K_P \qe + \K_I \dqe + \ddqd + \vect w
+\]
+
+now we consider the error dynamics with this control law
+
+\begin{align*}
+    \dot{\vect\xi} &= \matr H \vect\xi + \matr D \left(\vect\eta - \K_P \qe - \K_I \dqe - \vect w  \right) \\
+	&= \tilde{\matr H} \vect\xi + \matr D \left(\vect\eta - \vect w \right)
+\end{align*}
+
+defining $\K = \begin{bmatrix}\K_P & \K_D\end{bmatrix}$ with
+
+\[
+	\tilde{\matr H} = (\matr H - \matr D \K) =
+	\begin{bmatrix} \0&\I \\ - \K_P & \K_D \end{bmatrix}
+\]
+
+\begin{nb}all the eigenvalues of $\tilde{\matr H}$ are negative\end{nb}
+
+Now, we need to design a control law for $\vect w$, and to do this we will use the \textbf{Lyapunov method}.
+Consider the following \textbf{Lyapunov function} candidate
+
+\[
+	V(\vect\xi) = \vect\xi^\trans \matr Q \vect\xi > 0, \qquad \forall \vect\xi \div \vect 0
+\]
+
+where $\matr Q$ is symmetric positive definite matrix.
+
+\begin{align*}
+    \dot{V} &= \dot{\vect\xi}^\trans \matr Q \vect\xi + \vect\xi^\trans \matr Q \dot{\vect\xi} \\
+    &= ( \vect\xi^\trans \tilde{\matr H}^\trans + \left(\vect\eta - \vect w \right)^\trans \matr D^\trans) \matr Q \vect\xi +
+    \vect\xi^\trans \matr Q (\tilde{\matr H} \vect\xi + \matr D \left(\vect\eta - \vect w \right)) \\
+	&= \vect\xi^\trans \left( \tilde{\matr H}^\trans \matr Q + \matr Q \tilde{\matr H} \right) \vect\xi +
+    \left(\vect\eta - \vect w \right)^\trans \matr D^\trans \matr Q \vect\xi +
+    \vect\xi^\trans \matr Q \matr D \left(\vect\eta - \vect w \right) \\
+    \intertext{transposing the second element because it is a scalar}
+	&= \vect\xi^\trans \left( \tilde{\matr H}^\trans \matr Q + \matr Q \tilde{\matr H} \right) \vect\xi +
+    2 \vect\xi^\trans \matr Q \matr D \left(\vect\eta - \vect w \right)
+    \intertext{set $\vect z = \matr D^\trans \matr Q \vect\xi$ and $\tilde{\matr H}^\trans \matr Q + \matr Q \tilde{\matr H} = -\matr P$}
+    &= - \vect\xi^\trans \matr P \vect\xi +
+    2 \vect z^\trans \left(\vect\eta - \vect w \right)
+\end{align*}
+
+\begin{nb}because all eigenvalues of $\tilde{\matr H}$ are negative for any $\matr P$ positive definite symmetrical matrix also the solution $\matr Q$ is a positive definite symmetrical matrix\end{nb}
+
+Let us analyze the derivative Lyapunov function, the first element $- \vect\xi^\trans \matr P \vect\xi$ is always negative, so we need to analyze the second term.
+If $\vect\xi \in \ker(\matr D^\trans \matr Q)$, then $\vect z = 0$, so the system is asymptotically stable, in the other case we have to define a control function $\vect w$ that make the second term negative.
+From
+
+\[
+	\vect w = \rho \frac{\vect z}{\norm{\vect z}}
+\]
+
+we get
+
+\[
+	\vect z^\trans \left(\vect\eta - \vect w \right) =
+	\vect z^\trans \left(\vect\eta - \rho \frac{\vect z}{\norm{\vect z}} \right) =
+	\vect z^\trans \vect\eta - \rho \frac{\vect z^\trans \vect z}{\norm{\vect z}} \le \norm{\vect z}\norm{\vect\eta}-\rho\norm{\vect z} =
+	\norm{\vect z}(\norm{\vect\eta} - \rho)
+\]
+
+so, if $\rho > \norm{\vect\eta}$ the globally asymptotically stability for the system is guaranteed.
+Looking for define a function $\rho$ exploiting the assumptions
+
+\begin{multline*}
+    \norm{\vect\eta} \le
+    	\norm{\I - \B^\inv \Bs} (\norm{\ddqd} + \norm{\K}\norm{\vect\xi} + \norm{\vect w} + \norm{\B^\inv}\norm{\ner}) \\
+    	\le \alpha Q_M + \alpha \norm{\K} \norm{\vect\xi} + \alpha \rho + B_M \Phi(\norm{\vect\xi}) < \rho
+\end{multline*}
+
+so
+
+\[
+	\rho \ge \frac{1}{1-\alpha} \left(\alpha Q_M + \alpha \norm{\K} \norm{\vect\xi} + B_M \Phi(\norm{\vect\xi}) \right)
+\]
+
+under the assumption that $\Phi(\norm{\vect\xi})$ has the form $\alpha_0 + \alpha_1 \norm{\vect\xi} + \alpha_2 \norm{\vect\xi}^2$ we can chose
+
+\[
+	\rho(\norm{\vect \xi}) = \beta_0 + \beta_1 \norm{\vect\xi} + \beta_2 \norm{\vect\xi}^2
+\]
+
+with
+
+\[
+	\beta_0 \ge \frac{\alpha Q_M + \alpha_0 B_M}{1 - \alpha}, \qquad
+	\beta_1 \ge \frac{\alpha \norm{\K} + \alpha_1 B_M}{1 - \alpha}, \qquad
+	\beta_2 \ge \frac{\alpha_2 B_M}{1 - \alpha}
+\]
+
+this control law guarantees a globally asymptotically stability of the system.
+
+So the overall control law is composed by three terms
+
+\begin{itemize}
+	\item $\Bs(\q)\y + \ns(\q,\dq)$ \\
+	approximately compensated for the nonlinear terms
+
+	\item $\K_P\qe + \K_D\dqe + \ddqd$ \\
+	stabilizes the nominal dynamic system in the error
+
+	\item $\vect w = \rho(\norm{\vect \xi}) \frac{\vect z}{\norm{\vect z}}$ \\
+	gives robustness, counteracting the uncertainty
+\end{itemize}
+
+A further improvement can be done, in order to avoid high frequency switching of the control variable, called \textbf{chattering}\index{chattering}, the third term can be changed to
+
+\[
+	\vect w =
+	\begin{cases}
+		\rho(\norm{\vect \xi}) \frac{\vect z}{\norm{\vect z}} & \norm{\vect z} \ge \epsilon \\
+		\rho(\norm{\vect \xi}) \frac{\vect z}{\epsilon} & \norm{\vect z} < \epsilon
+	\end{cases}
+\]
+
+\begin{figure}[htb]
+	\centering
+	\resizebox{\textwidth}{!}{
+	\begin{tikzpicture}
+		\node [input] (iq_d) {};
+		\node [input, above=1.5cm of iq_d] (idq_d) {};
+		\node [input, above=1.5cm of idq_d] (iddq_d) {};
+
+		\node [sum, right=1.5cm of iq_d] (sum_e) {};
+		\node [sum, right=0.8cm of idq_d] (sum_de) {};
+
+		\node [block, right=1cm of sum_e] (kp) {$\matr K_P$};
+		\node [block] at (sum_de -| kp) (kd) {$\matr K_D$};
+
+		\node [spy, right=0.5cm of kd] (bend) {};
+		\node [sum, right=1.5cm of kd] (sum_y) {};
+
+		\node [block, right=1cm of sum_y] (b) {$\hat{\matr B}(\cdot)$};
+		\node [sum, right=1cm of b] (sum_t) {};
+		\node [block, right=1cm of sum_t] (robot) {Robot};
+
+		\node [block, below=0.5cm of robot] (n) {$\hat{\vect n}(\cdot,\cdot)$};
+
+		\node [output, right=1.5cm of robot, yshift=0.3cm] (odq) {};
+		\node [output, right=1.5cm of robot, yshift=-0.3cm] (oq) {};
+
+		\node [node, below=0.3cm of n, xshift=0.4cm] (n_q) {};
+		\node [node, below=0.6cm of n, xshift=-0.4cm] (n_dq) {};
+		\node [node] at (n_q -| b) (b_q) {};
+
+		\draw [->] (iq_d) -- node [pos=0.2] {$\qd$} (sum_e);
+		\draw [->] (idq_d) -- node [pos=0.3] {$\dqd$} (sum_de);
+		\draw [->] (iddq_d) -- node [pos=0.05] {$\ddqd$} (bend |- iddq_d) -- (sum_y);
+
+		\draw [->] (sum_e) -- node [pos=0.2] {$\qe$} node[node, pos=0.6] (qe) {} (kp);
+		\draw [->] (sum_de) -- node [pos=0.2] {$\dqe$} node[node, pos=0.4] (dqe) {} (kd);
+
+		\draw [->] (kp) -- (bend |- kp) -- (sum_y);
+		\draw [->] (kd) -- (sum_y);
+
+		\draw [->] (sum_y) -- node {$\vect y$} (b);
+		\draw [->] (b) -- (sum_t);
+		\draw [->] (sum_t) -- node {$\vect \tau$} (robot);
+
+		\draw [->] (robot.east |- odq) -- node [pos=0.8] {$\dq$} node [node, name=dq, pos=0.6] {} (odq);
+		\draw [->] (robot.east |- oq) -- node [pos=0.8, below] {$\q$} node [node, name=q, pos=0.3] {} (oq);
+
+		\draw [->] (n) -| (sum_t);
+
+		\draw [->] (q) |- (n_q) -- (b_q) -| node [pos=0.95] {$-$} (sum_e);
+		\draw [->] (dq) |- (n_dq)  -| node [pos=0.95] {$-$} (sum_de);
+
+		\draw [->] (n_q) -- (n_q |- n.south);
+		\draw [->] (n_dq) -- (n_dq |- n.south);
+		\draw [->] (b_q) -- (b_q |- b.south);
+
+		\node [block, above=2cm of sum_y] (w) {$\rho(\norm{\vect\xi})\frac{\vect z}{\norm{\vect z}}$};
+		\node [block] at (kd |- w) (t) {$\matr D^\trans \matr Q$};
+
+		\node [node, yshift=0.3cm] at (dqe |- t) (dqe_t) {};
+		\node [node, yshift=-0.3cm] at (qe |- t) (qe_t) {};
+
+		\draw [->] (qe) -- (qe_t) -- ++(0,1.2) -| ([xshift=-0.4cm]w);
+		\draw [->] (dqe) -- (dqe_t) -- ++(0,1.0) -| ([xshift=0.4cm]w);
+
+		\draw [->] (qe_t) -- (qe_t -| t.west);
+		\draw [->] (dqe_t) -- (dqe_t -| t.west);
+
+		\draw [->] (t) -- node {$\vect z$} (w);
+		\draw [->] (w) -- node[pos=0.7] {$\vect w$} (sum_y);
+
+	\end{tikzpicture}
+	}
+	\caption{Closed loop with inverse dynamics robust control}
+	\label{fig:inverse-dynamics-robust-control}
 \end{figure}
 
 \section{Control in operational space}
