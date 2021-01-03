@@ -53,15 +53,15 @@ Now we can combine the models of motors/transmissions and robots
     \matr J_m\ddq_m + \matr D_m \dq_m + \matr N^{-1} \left( \matr{B}(\q)\ddq +
     \matr{C}(\q,\dq)\dq + \vect{g}(\q) \right) &= \vect \tau_m \\
     \intertext{replace the joints variables with motors ones} \\
-    \matr J_m\ddq_m + \matr D_m \dq_m + \matr N^{-1} \matr{B}(\q) \matr N^{-1} \ddq_m +
+    \matr J_m\ddq_m + \matr D_m \dq_m + \matr N^{-1} \matr{B}(\q) \matr N^{-1} \ddq_m + \hspace{5cm} \\
     \matr N^{-1} \matr{C}(\q,\dq) \matr N^{-1} \dq_m +
     \matr N^{-1} \vect{g}(\q) &= \vect \tau_m \\
     \intertext{introduce the decomposition of $\matr B(\q)$} \\
-    \matr J_m\ddq_m + \matr D_m \dq_m + \matr N^{-1} \left(\bar{\matr B} + \matr{\Delta B}(\q)\right) \matr N^{-1} \ddq_m +
+    \matr J_m\ddq_m + \matr D_m \dq_m + \matr N^{-1} \left(\bar{\matr B} + \matr{\Delta B}(\q)\right) \matr N^{-1} \ddq_m + \hspace{3cm} \\
     \matr N^{-1} \matr{C}(\q,\dq) \matr N^{-1} \dq_m +
     \matr N^{-1} \vect{g}(\q) &= \vect \tau_m \\
-    (\matr J_m + \matr N^{-1} \bar{\matr B} \matr N^{-1} )\ddq_m + \matr D_m \dq_m + \hspace{7cm} \\
-    \matr N^{-1} \matr{\Delta B}(\q) \matr N^{-1} \ddq_m +
+    (\matr J_m + \matr N^{-1} \bar{\matr B} \matr N^{-1} )\ddq_m + \matr D_m \dq_m +
+    \matr N^{-1} \matr{\Delta B}(\q) \matr N^{-1} \ddq_m + \hspace{2cm} \\
     \matr N^{-1} \matr{C}(\q,\dq) \matr N^{-1} \dq_m +
     \matr N^{-1} \vect{g}(\q) &= \vect \tau_m \\
     \intertext{introduce the vector $\vect d$ and the matrix $\bar{\matr B}_r = \matr N^{-1} \bar{\matr B} \matr N^{-1}$} \\
@@ -91,7 +91,7 @@ The control loop for each joint is independent of each others.
         \node [input] (input) {};
         \node [sum, right=1cm of input] (sum_i) {};
         \node [sum, right=0.6cm of sum_i] (sum_f) {};
-        \node [block, right=0.6cm of sum_f] (inertial) {$\left(\matr J_m + \bar{\matr B}_r \right)^{-1}$};
+        \node [block, right=0.6cm of sum_f] (inertial) {$\left(\J_m + \bar{\B}_r \right)^\inv$};
         \node [block, below=0.5cm of inertial] (dq2f) {$\matr D_m$};
         \node [integrator, right=1cm of inertial] (ddq2dq) {};
         \node [integrator, right=1cm of ddq2dq] (dq2q) {};
@@ -108,9 +108,9 @@ The control loop for each joint is independent of each others.
         \draw [->] (d_b) -- (sum_d);
         \draw [->] (d_c) -- ++(-6em,0) -- (sum_d);
         \draw [->] (d_g) -| (sum_d);
-        \draw [->] (inertial) -- node [pos=0.35] {$\ddq_m$} node [name=ddq, pos=0.65,inner sep=0] {}  (ddq2dq);
-        \draw [->] (ddq2dq) -- node [pos=0.35] {$\dq_m$} node [name=dq, pos=0.65,inner sep=0] {}  (dq2q);
-        \draw [->] (dq2q) -- node [name=q, pos=0.2,inner sep=0] {} node [pos=0.6] {$\q_m$}  (output);
+        \draw [->] (inertial) -- node [pos=0.35] {$\ddq_m$} node [node, name=ddq, pos=0.65,inner sep=0] {}  (ddq2dq);
+        \draw [->] (ddq2dq) -- node [pos=0.35] {$\dq_m$} node [node,name=dq, pos=0.65,inner sep=0] {} (dq2q);
+        \draw [->] (dq2q) -- node [pos=0.6] {$\q_m$} node [node, name=q, pos=0.2,inner sep=0] {} (output);
 
         \draw [->] (ddq) |- (d_b);
         \draw [->] (dq) |- (d_c);

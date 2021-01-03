@@ -94,7 +94,7 @@ Let us define
 
 \[ \matr{I}_{l_i} = \int_{V_i} \matr{S}^\trans(\vect{r}_i) \matr{S}(\vect{r}_i) \rho dV \]
 
-we call it \textbf{inertia tensor}\index{inertia!tensor} referred to the center of mass of the i-th link \underline{expressed in the base frame}.
+we call it \textbf{inertia tensor}\index{inertia!tensor} referred to the center of mass of the i-th link \ul{expressed in the base frame}.
 
 The \textbf{inertia tensor} is a symmetrical matrix $3 \times 3$ and its components are expressed as
 
@@ -194,11 +194,11 @@ where $\vect{g}_0$ is the gravity acceleration vector expressed in the base fram
 
 Now, we have $\mathcal{T}$ and $\mathcal{U}$, so we can finally compute the Lagrangian function and solve the Lagrangian equation
 
-\[
-	\mathcal{L}(\q,\dq) = \mathcal{T}(\q,\dq) - \mathcal{U}(\q) =
-	\frac{1}{2} \dq^\trans \matr{B}(\q) \dq + \sum_{i=1}^n m_i \vect{g}_0^\trans \vect{p}_i =
-	\frac{1}{2} \sum_{i=1}^n \sum_{j=1}^n \dot{q}_i \dot{q}_j b_{ij}(\q) + \sum_{i=1}^n m_i \vect{g}_0^\trans \vect{p}_i(\q)
-\]
+\begin{align*}
+    \mathcal{L}(\q,\dq) &= \mathcal{T}(\q,\dq) - \mathcal{U}(\q) \\
+    &= \frac{1}{2} \dq^\trans \matr{B}(\q) \dq + \sum_{i=1}^n m_i \vect{g}_0^\trans \vect{p}_i \\
+    &= \frac{1}{2} \sum_{i=1}^n \sum_{j=1}^n \dot{q}_i \dot{q}_j b_{ij}(\q) + \sum_{i=1}^n m_i \vect{g}_0^\trans \vect{p}_i(\q)
+\end{align*}
 
 Let us consider the Lagrangian equation referring to a generic joint
 
@@ -366,7 +366,7 @@ we consider the left side member, and we try to solve it
 
 \begin{align*}
     \frac{1}{2} \frac{d}{dt} (\dq^\trans \matr B(\q)\dq) &= \frac{1}{2} \dq^\trans \dot{\matr B}(\q)\dq + \dq^\trans \matr B(\q)\ddq \\
-    \text{using $\matr B(\q)\ddq$ from \ref{eq:dynamics}} \qquad &= \frac{1}{2} \dq^\trans \dot{\matr B}(\q)\dq + \dq^\trans \left( \vect{\tau} - \matr{C}(\q,\dq)\dq - \matr{F}_\nu\dq - \matr{f}_s(\q,\dq) - \vect{g}(\q) \right) \\
+    \text{using \ref{eq:dynamics}} \qquad &= \frac{1}{2} \dq^\trans \dot{\matr B}(\q)\dq + \dq^\trans \left( \vect{\tau} - \matr{C}(\q,\dq)\dq - \matr{F}_\nu\dq - \matr{f}_s(\q,\dq) - \vect{g}(\q) \right) \\
 	&= \frac{1}{2} \dq^\trans \left( \dot{\matr B}(\q) - 2 \matr{C}(\q,\dq) \right)\dq + \dq^\trans \left( \vect{\tau} - \matr{F}_\nu\dq - \matr{f}_s(\q,\dq) - \vect{g}(\q) \right) \\
     &= \frac{1}{2} \dq^\trans \matr N(\q,\dq) \dq + \dq^\trans \left( \vect{\tau} - \matr{F}_\nu\dq - \matr{f}_s(\q,\dq) - \vect{g}(\q) \right)
 \end{align*}
