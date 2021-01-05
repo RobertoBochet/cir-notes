@@ -285,7 +285,7 @@ You can see the implementation of this control in \autoref{fig:inverse-dynamics-
 	\label{fig:inverse-dynamics-control}
 \end{figure}
 
-\subsubsection{Taking into account the uncertainty}
+\subsubsection{Taking into account the uncertainty}\label{subsubsec:inverse-dynamics-robust-control}
 
 As we saw in above the inverse dynamics control required perfect knowledge of the dynamics model of the robot, this is unrealistic in real robots, so we have to take into account the \textbf{model uncertainty}\index{model!uncertainty}.
 
@@ -569,9 +569,244 @@ A further improvement can be done, in order to avoid high frequency switching of
 
 	\end{tikzpicture}
 	}
+
 	\caption{Closed loop with inverse dynamics robust control}
 	\label{fig:inverse-dynamics-robust-control}
 \end{figure}
+
+\subsubsection{Adaptive control}
+
+In additional to the inverse dynamics robust control (\autoref{subsubsec:inverse-dynamics-robust-control}) we can consider an adaptive control to compensate the \text{uncertain dynamic parameters}\index{uncertain dynamic parameters}.
+As we saw in \autoref{subsec:linearity-in-dynamic-parameters}  the dynamic model can write as
+
+\[
+	\matr{B}(\q)\ddq + \matr{C}(\q,\dq)\dq + \vect{g}(\q) = \matr Y(\q,\dq,\ddq)\vect\pi = \vect\tau
+\]
+
+where $\vect\pi$ is a suitable constant vector of \text{uncertain dynamic parameters}.
+
+Let us consider the control law
+
+\[
+	\vect\tau = \matr{B}(\q)\ddq_r + \matr{C}(\q,\dq)\dq_r + \vect{g}(\q) + \K_D\vect\sigma
+\]
+
+where
+
+\[
+	\dq_r = \dqd + \matr\Lambda \qe \qquad \ddq_r = \ddqd + \matr\Lambda \dqe
+\]
+
+with $\matr\Lambda$ symmetrical positive define matrix (usually diagonal).
+If we impose
+
+\[
+	\vect\sigma = \dq_r - \dq = \dqe + \matr\Lambda\qe
+\]
+
+we get as overall system
+
+\begin{align}
+    \matr{B}(\q)\ddq + \matr{C}(\q,\dq)\dq + \vect{g}(\q) &= \matr{B}(\q)\ddq_r + \matr{C}(\q,\dq)\dq_r + \vect{g}(\q) + \K_D \vect\sigma \nonumber \\
+    \matr{B}(\q)\ddq + \matr{C}(\q,\dq)\dq  &= \matr{B}(\q)\ddq_r + \matr{C}(\q,\dq)\dq_r + \K_D \vect\sigma \nonumber \\
+    \matr{B}(\q) \left( \ddq - \ddq_r \right) + \matr{C}(\q,\dq) \left( \dq - \dq_r \right) &= \K_D \vect\sigma \nonumber \\
+    - \matr{B}(\q) \dot{\vect\sigma} - \matr{C}(\q,\dq) \vect\sigma &= \K_D \vect\sigma \nonumber \\
+    \matr{B}(\q) \dot{\vect\sigma} + \matr{C}(\q,\dq) \vect\sigma + \K_D \vect\sigma &= \0 \label{eq:adaptive-control-sigma-dynamics}
+\end{align}
+
+So let us check the stability of this system using the Lyapunov function
+
+\[
+	V(\vect\sigma, \qe) = \frac{1}{2} \vect\sigma^\trans \B(\q) \vect\sigma + \frac{1}{2} \qe^\trans \matr M \qe
+\]
+
+$\matr M$ is (as always) a positive definite matrix, so the derivative is
+
+\begin{align*}
+    \dot{V} &= \vect\sigma^\trans \B(\q) \dot{\vect\sigma} + \frac{1}{2} \vect\sigma^\trans \dB(\q) \vect\sigma + \qe^\trans \matr M \dqe \\
+    \intertext{using $\B(\q) \dot{\vect\sigma}$ from \autoref{eq:adaptive-control-sigma-dynamics}}
+	&= \vect\sigma^\trans \left( - \matr{C}(\q,\dq)  - \K_D \right) \vect\sigma + \frac{1}{2} \vect\sigma^\trans \dB(\q) \vect\sigma + \qe^\trans \matr M \dqe \\
+	&= - \vect\sigma^\trans \K_D \vect\sigma + \frac{1}{2} \vect\sigma^\trans \left( \dB(\q) - 2 \matr{C}(\q,\dq)\right) \vect\sigma + \qe^\trans \matr M \dqe \\
+    \intertext{remembering the property of the matrix  $\dB(\q) - 2 \matr{C}(\q,\dq)$ seen in \autoref{subsec:matrix-db-2c}}
+    &= - \vect\sigma^\trans \K_D \vect\sigma + \qe^\trans \matr M \dqe \\
+	&= -(\dqe + \matr\Lambda\qe)^\trans \K_D (\dqe + \matr\Lambda\qe) + \qe^\trans \matr M \dqe \\
+	&= - \dqe^\trans \K_D \dqe - \qe^\trans \matr\Lambda \K_D \matr\Lambda\qe - 2 \qe^\trans \matr\Lambda \K_D \dqe + \qe^\trans \matr M \dqe \\
+	\intertext{choosing $\matr M = 2 \matr\Lambda \K_D$}
+    &= - \dqe^\trans \K_D \dqe - \qe^\trans \matr\Lambda \K_D \matr\Lambda\qe \\
+\end{align*}
+
+$\dot{V}$ is negative define thus the system is globally asymptotically stable with the equilibrium $\qe = 0, \dqe = 0 $
+
+Now let us consider a control law where the parameters are estimated and exploiting the formulation with the parametric vector we saw above
+
+\begin{align*}
+    \vect\tau &= \Bs(\q)\ddq_r + \Cs(\q,\dq)\dq_r + \gs(\q) + \K_D\vect\sigma \\
+    &= \matr Y (\q,\dq,\dq_r,\ddq_r)\estimate{\vect\pi} + \K_D\vect\sigma
+\end{align*}
+
+the system dynamic model \autoref{eq:adaptive-control-sigma-dynamics} become
+
+\begin{align*}
+    \B(\q) \dot{\vect\sigma} + \matr{C}(\q,\dq) \vect\sigma + \K_D \vect\sigma &=
+    - \Be(\q) \ddq_r - \Ce(\q,\dq) \dq_r - \error\g(\q) \\
+    &= - \matr Y (\q,\dq,\dq_r,\ddq_r)\error{\vect\pi}
+\end{align*}
+
+where $\Be, \Ce, \error\g$ are the residual error given by the estimate of the model parameters, and thus the $\matr Y (\q,\dq,\dq_r,\ddq_r)\error{\vect\pi}$ can be seen as the model residual error.
+
+So consider a modified version of the Lyapunov function saw before
+
+\[
+	V(\vect\sigma, \qe, \error{\vect\pi}) = \frac{1}{2} \vect\sigma^\trans \B(\q) \vect\sigma + \qe^\trans \matr\Lambda \K_D \qe + \frac{1}{2} \error{\vect\pi}^\trans \K_\pi \error{\vect\pi}
+\]
+
+where $\matr M$ is already substituted and $\K_\pi$ is a positive define matrix
+
+\begin{align*}
+    \dot V &= \vect\sigma^\trans \B(\q) \dot{\vect\sigma} + \frac{1}{2} \vect\sigma^\trans \dB(\q) \vect\sigma +
+    2 \qe^\trans \matr\Lambda \K_D \dqe + \error{\vect\pi}^\trans \K_\pi \dot{\error{\vect\pi}} \\
+    \intertext{using $\B(\q) \dot{\vect\sigma}$ from uncertain dynamics model}
+    &= \vect\sigma^\trans \left( - \matr{C}(\q,\dq)  - \K_D \right) \vect\sigma - \vect\sigma^\trans \matr Y (\q,\dq,\dq_r,\ddq_r)\error{\vect\pi}
+    + \frac{1}{2} \vect\sigma^\trans \dB(\q) \vect\sigma \\ & \hspace{0.6\textwidth}
+    + 2 \qe^\trans \matr\Lambda \K_D \dqe + \error{\vect\pi}^\trans \K_\pi \dot{\error{\vect\pi}} \\
+    &= - \vect\sigma^\trans \K_D \vect\sigma + \frac{1}{2} \vect\sigma^\trans \left( \dB(\q) - 2 \matr{C}(\q,\dq)\right) \vect\sigma
+    - \vect\sigma^\trans \matr Y (\q,\dq,\dq_r,\ddq_r)\error{\vect\pi}  \\ & \hspace{0.6\textwidth}
+    + 2 \qe^\trans \matr\Lambda \K_D \dqe + \error{\vect\pi}^\trans \K_\pi \dot{\error{\vect\pi}} \\
+    &= - \vect\sigma^\trans \K_D \vect\sigma
+    - \vect\sigma^\trans \matr Y (\q,\dq,\dq_r,\ddq_r)\error{\vect\pi} + 2 \qe^\trans \matr\Lambda \K_D \dqe + \error{\vect\pi}^\trans \K_\pi \dot{\error{\vect\pi}} \\
+    &= - \vect\sigma^\trans \K_D \vect\sigma
+     + 2 \qe^\trans \matr\Lambda \K_D \dqe + \error{\vect\pi}^\trans (\K_\pi \dot{\error{\vect\pi}} -  \matr Y^\trans (\q,\dq,\dq_r,\ddq_r) \vect\sigma) \\
+    \intertext{using $\vect\sigma$}
+    &= - (\dqe + \matr\Lambda\qe)^\trans \K_D (\dqe + \matr\Lambda\qe)
+    + 2 \qe^\trans \matr\Lambda \K_D \dqe + \error{\vect\pi}^\trans (\K_\pi \dot{\error{\vect\pi}} -  \matr Y^\trans (\q,\dq,\dq_r,\ddq_r) \vect\sigma) \\
+	&= - \dqe^\trans \K_D \dqe - \qe^\trans \matr\Lambda \K_D \matr\Lambda \qe - 2 \qe^\trans \matr\Lambda \K_D \dqe
+    + 2 \qe^\trans \matr\Lambda \K_D \dqe \\ & \hspace{0.5\textwidth}
+    + \error{\vect\pi}^\trans (\K_\pi \dot{\error{\vect\pi}} -  \matr Y^\trans (\q,\dq,\dq_r,\ddq_r) \vect\sigma) \\
+    &= - \dqe^\trans \K_D \dqe - \qe^\trans \matr\Lambda \K_D \matr\Lambda \qe
+    + \error{\vect\pi}^\trans (\K_\pi \dot{\error{\vect\pi}} -  \matr Y^\trans (\q,\dq,\dq_r,\ddq_r) \vect\sigma) \\
+	\intertext{if we update the parameters' estimate as $\dot{\estimate{\vect\pi}}=\K_\pi^\inv \matr Y^\trans (\q,\dq,\dq_r,\ddq_r) \vect\sigma=\dot{\error{\vect\pi}}$}
+    &= - \dqe^\trans \K_D \dqe - \qe^\trans \matr\Lambda \K_D \matr\Lambda \qe
+\end{align*}
+
+$\dot{V} < 0$ thus, the system is globally asymptotically stable with the equilibrium $\qe = 0, \dqe = 0$
+
+So, in summary the overall control law (which you can see in the \autoref{fig:adaptive-control}) is described by the system
+
+\begin{align*}
+	\dot{\estimate{\vect\pi}} &= \K_\pi^\inv \matr Y^\trans (\q,\dq,\dq_r,\ddq_r) (\dqe + \matr\Lambda\qe) \\
+	\vect\tau &= \matr Y (\q,\dq,\dq_r,\ddq_r)\estimate{\vect\pi} + \K_D (\dqe + \matr\Lambda\qe) \\
+\end{align*}
+
+in which we can identify three terms
+
+\begin{itemize}
+	\item $\matr Y (\q,\dq,\dq_r,\ddq_r)\estimate{\vect\pi}$ \\
+	can be interpreted as an approximate inverse dynamic control
+
+	\item $\K_D (\dqe + \matr\Lambda\qe)$ \\
+	has the behaviour of a PD acting on the tracking error
+
+	\item $\K_\pi^\inv \matr Y^\trans (\q,\dq,\dq_r,\ddq_r) (\dqe + \matr\Lambda\qe)$ \\
+	update the estimate of parameters in according to a gradient technique.
+	The matrix $\K_\pi$ defines the speed of the convergence of the estimate to its asymptotic value.
+\end{itemize}
+
+\begin{nb}asymptotically we will not get $\estimate{\vect\pi} \to \vect\pi$, but only $\matr Y(\q,\dq,\dq_r,\ddq_r)(\estimate{\vect\pi} - \vect\pi) \to \0$\end{nb}
+
+\begin{figure}[htb]
+	\centering
+	\resizebox{\textwidth}{!}{
+		\begin{tikzpicture}
+			\node [input] (iq_d) {};
+			\node [input, above=1.8cm of iq_d] (idq_d) {};
+			\node [input, above=1.8cm of idq_d] (iddq_d) {};
+
+			\node [sum, right=1cm of iq_d] (sum_e) {};
+			\node [sum, xshift=0.6cm] at (idq_d -| sum_e) (sum_de) {};
+			\node [block, right=0.6cm of sum_de] (lambda_de) {$\matr\Lambda$};
+			\node [block] at (sum_e -| lambda_de) (lambda_e) {$\matr\Lambda$};
+
+			\node [sum, xshift=0.6cm] at ($(lambda_e.east)!0.5!(lambda_de.east)$) (sum_dqr) {};
+			\node [sum] at (iddq_d -| sum_dqr) (sum_ddqr) {};
+
+			\node [sum, right=1cm of sum_dqr] (sum_s) {};
+
+			\node [block, right=1cm of sum_s] (s2dpis) {$\K_\pi^\inv \matr Y^\trans$};
+			\node [integrator, right=0.6cm of s2dpis] (dpis2pis) {};
+			\node [block, right=0.6cm of dpis2pis] (y) {$\matr Y$};
+
+			\node [block, below=0.5cm of dpis2pis] (kd) {$\K_D$};
+
+			\node [sum, right=0.6cm of y] (sum_t) {};
+			\node [block, right=0.6cm of sum_t] (robot) {Robot};
+
+			\node [output, right=1.5cm of robot, yshift=0.3cm] (odq) {};
+			\node [output, right=1.5cm of robot, yshift=-0.3cm] (oq) {};
+
+			\draw [->] (iq_d) -- node[pos=0.2] {$\qd$} (sum_e);
+			\draw [->] (idq_d) -- node[pos=0.15] {$\dqd$} node[node, name=dqd, pos=0.5] {} (sum_de);
+			\draw [->] (iddq_d) -- node[pos=0.05] {$\ddqd$} (sum_ddqr);
+			\draw [->] (dqd) |- (sum_dqr);
+
+			\draw [->] (sum_dqr) -- node[node, name=dqr, pos=0.6] {} node[pos=0.3] {$\dq_r$} (sum_s);
+			\draw [->] (sum_s) -- node[node, name=s] {} node {$\vect\sigma$} (s2dpis);
+
+			\draw [->] (s2dpis) -- node {$\dot{\estimate{\vect\pi}}$} (dpis2pis);
+			\draw [->] (dpis2pis) -- node {$\estimate{\vect\pi}$} (y);
+			\draw [->] (y) -- (sum_t);
+
+			\draw [->] (s) |- (kd);
+			\draw [->] (kd) -| (sum_t);
+
+			\draw [->] (sum_t) -- node {$\vect\tau$} (robot);
+
+			\draw [->] (robot.east |- odq) -- node [pos=0.8] {$\dq$} node [node, name=dq, pos=0.6] {} (odq);
+			\draw [->] (robot.east |- oq) -- node [pos=0.8, below] {$\q$} node [node, name=q, pos=0.3] {} (oq);
+
+			\draw [->] (sum_e) -- node[pos=0.7] {$\qe$} (lambda_e);
+			\draw [->] (lambda_e) -| (sum_dqr);
+
+			\draw [->] (sum_de) -- node {$\dqe$} (lambda_de);
+
+			\draw [->] (lambda_de) -| (sum_ddqr);
+
+			\node [node, below=2.5cm of sum_s] (dq_f) {};
+			\node [spy, below=0.5cm of dq_f] (q_f) {};
+
+			\draw [->] (dq) |- (dq_f)  -| node[pos=0.95] {$-$} (sum_de);
+			\draw [->] (dq_f) -- node[pos=0.95] {$-$} (sum_s);
+			\draw [->] (q) |- (q_f)  -| node[pos=0.95] {$-$} (sum_e);
+
+
+			\node [node] at ([xshift=-0.6cm]iddq_d -| s2dpis) (s2dpis_ddqr2) {};
+			\node [node] at ([xshift=-0.6cm]$(s2dpis.north |- iddq_d)!0!(s2dpis.north)$) (ddqr_1) {};
+			\node [node] at ([xshift=-0.2cm]$(s2dpis.north |- iddq_d)!0.25!(s2dpis.north)$) (dqr_1) {};
+			\node [spy] at ([xshift=0.2cm]$(s2dpis.north |- iddq_d)!0.5!(s2dpis.north)$) (dq_2) {};
+			\node [spy] at ([xshift=0.6cm]$(s2dpis.north |- iddq_d)!0.75!(s2dpis.north)$) (q_2) {};
+
+			\node [spy] at ([xshift=-0.6cm]$(y.north |- iddq_d)!0!(y.north)$) (ddqr_2) {};
+			\node [spy] at ([xshift=-0.2cm]$(y.north |- iddq_d)!0.25!(y.north)$) (dqr_2) {};
+			\node [node] at ([xshift=0.2cm]$(y.north |- iddq_d)!0.5!(y.north)$) (dq_1) {};
+			\node [node] at ([xshift=0.6cm]$(y.north |- iddq_d)!0.75!(y.north)$) (q_1) {};
+
+			\draw [->] (q) |- (q_1) -- (y.north -| q_1);
+			\draw [->] (dq) |- (dq_1) -- (y.north -| dq_1);
+			\draw [->] (q_1) -- (q_2) -- (y.north -| q_2);
+			\draw [->] (dq_1) -- (dq_2) -- (y.north -| dq_2);
+
+			\draw [->] (sum_ddqr) -- node[pos=0.15] {$\ddqe_r$} (ddqr_1) -- (s2dpis.north -| ddqr_1);
+			\draw [->] (dqr) |- (dqr_1) -- (s2dpis.north -| dqr_1);
+			\draw [->] (ddqr_1) -- (ddqr_2) -- (y.north -| ddqr_2);
+			\draw [->] (dqr_1) -- (dqr_2) -- (y.north -| dqr_2);
+		\end{tikzpicture}
+	}
+
+	\caption{Adaptive control scheme}
+	\label{fig:adaptive-control}
+\end{figure}
+
+In conclusion the \textbf{adaptive control} offers worse performance than the \textbf{robust control} in presence of model errors, but this first guarantees a more regular control action than the \textbf{robust control}, which are characterized by potentially dangerous high frequency switching.
+
 
 \section{Control in operational space}
 

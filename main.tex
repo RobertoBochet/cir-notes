@@ -65,18 +65,28 @@ bottom=30mm
 \newcommand\norm[1]{\left\lVert#1\right\rVert}
 
 \newcommand{\I}{\matr{I}}
-\newcommand{\0}{\matr{0}}
+\newcommand{\0}{\vect{0}}
 
 \newcommand{\J}{\matr{J}}
+
+\newcommand{\estimate}[1]{\hat{#1}}
+\newcommand{\error}[1]{\tilde{#1}}
 
 \newcommand{\B}{\matr{B}}
 \newcommand{\dB}{\dot\B}
 \newcommand{\Bs}{\hat\B}
-\newcommand{\Be}{\tilde\B}
+\newcommand{\Be}{\error\B}
+
+\newcommand{\C}{\matr{C}}
+\newcommand{\Cs}{\estimate\C}
+\newcommand{\Ce}{\error\C}
+
+\newcommand{\g}{\vect{g}}
+\newcommand{\gs}{\estimate\g}
 
 \newcommand{\n}{\vect{n}}
-\newcommand{\ns}{\hat\n}
-\newcommand{\ner}{\tilde\n} % #r becuase ne already exists
+\newcommand{\ns}{\estimate\n}
+\newcommand{\ner}{\error\n} % #r becuase ne already exists
 
 \newcommand{\K}{\matr{K}}
 
