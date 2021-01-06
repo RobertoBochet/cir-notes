@@ -810,3 +810,105 @@ In conclusion the \textbf{adaptive control} offers worse performance than the \t
 
 \section{Control in operational space}
 
+In opposite to the control in the joints space, we can implement the control directly in the operational space (a Cartesian space).
+
+As first difference by the control in the joints space, we will not apply the kinematic inversion, but the measures are actually the result of the direct kinematics computations based (generally) on the joint measures.
+
+\subsection{PD + gravity compensation}
+
+In a cartesian space we can define the error as
+
+\[
+	\xe = \xd - \x
+\]
+
+Let us consider a Lyapunov function
+
+\[
+	V(\xe,\dq) = \frac{1}{2} \dq^\trans\B(\q)\dq + \frac{1}{2}\xe^\trans \K_P \xe
+\]
+
+with $\K_P$ symmetric positive definite matrix
+
+\begin{align*}
+    \dot V &= \dq^\trans \B(\q) \ddq + \frac{1}{2} \dq^\trans \dB(\q) \dq + \dxe^\trans \matr K_P \xe \\
+	\intertext{exploiting the \textbf{analytic Jacobian}\index{analytic Jacobian} we have $\dxe=\dx=-\J_A(\q)\dq$}
+	&= \dq^\trans \B(\q) \ddq + \frac{1}{2} \dq^\trans \dB(\q) \dq - \dq^\trans \J_A^\trans(\q)\K_P \xe \\
+    \intertext{replacing $\B\ddq$ with the \autoref{eq:simplified-dynamics}}
+	&= \dq^\trans \left( \vect\tau - \C(\q,\dq)\dq - \g(\q) \right) + \frac{1}{2} \dq^\trans \dB(\q) \dq - \dq^\trans \J_A^\trans(\q)\K_P \xe \\
+	&= \frac{1}{2} \dq^\trans \left(\dB(\q) - 2\C(\q,\dq) \right) \dq + \dq^\trans \left( \vect\tau - \g(\q)  - \J_A^\trans(\q)\K_P \xe \right) \\
+	\intertext{with the property we saw in \autoref{subsec:matrix-db-2c} we can eliminate the first term}
+	&= \dq^\trans \left( \vect\tau - \g(\q)  - \J_A^\trans(\q)\K_P \xe \right) \\
+    \intertext{consider the control law $\vect\tau = \g(\q) + \J_A^\trans(\q) \K_P \xe - \J_A^\trans(\q) \K_D \J_A(\q) \dq$}
+	&= \dq^\trans \left( \g(\q) + \J_A^\trans(\q) \K_P \xe - \J_A^\trans(\q) \K_D \J_A(\q) \dq - \g(\q)  - \J_A^\trans(\q)\K_P \xe \right) \\
+	&= - \dq^\trans \J_A^\trans(\q) \K_D \J_A(\q) \dq
+\end{align*}
+
+we can state $\dot V \le 0$ ($\dot V = 0$ for $\dq=0, \forall \xe \in \Real $) so let us check the system trajectory.
+The dynamics model (\autoref{eq:simplified-dynamics}) with the control law become
+
+\[
+	\matr{B}(\q)\ddq + \matr{C}(\q,\dq)\dq = \J_A^\trans(\q) \K_P \xe - \J_A^\trans(\q) \K_D \J_A(\q) \dq
+\]
+
+evaluated in the equilibrium $\dq = 0, \ddq = 0$
+
+\[
+	\J_A^\trans(\q) \K_P \xe = \0
+\]
+
+so, if the Jacobian is full rank the only solution is $\xe = 0$, thus the system is globally asymptotically stable with the equilibrium $\xd = \x$.
+
+\begin{figure}[htb]
+	\centering
+	%\resizebox{\textwidth}{!}{
+	\begin{tikzpicture}
+		\node [input] (iq_d) {};
+
+		\node [sum, right=1cm of iq_d] (sum_e) {};
+		\node [block, right=0.6cm of sum_e] (kp) {$\matr K_P$};
+		\node [sum, right=0.6cm of kp] (sum_d) {};
+		\node [block, right=0.6cm of sum_d] (ja_t) {$\J_A^\trans(\cdot)$};
+		\node [sum, right=0.6cm of ja_t] (sum_g) {};
+		\node [block, right=1cm of sum_g] (robot) {$Robot$};
+		\node [block, above=0.6cm of ja_t] (kd) {$\matr K_D$};
+		\node [block, right=1.5cm of kd] (ja) {$\J_A(\cdot)$};
+		\node [block, below left=0.6cm and -1cm of robot] (g) {$\vect g(\cdot)$};
+
+		\node [output, right=1cm of robot, yshift=0.3cm] (odq) {};
+		\node [output, right=1cm of robot, yshift=-0.3cm] (oq) {};
+
+		\node [block, below=1.5cm of kp] (k) {$\vect k(\cdot)$};
+
+
+		\node [node] at (k -| ja_t) (q_f) {};
+
+		\draw [->] (iq_d) -- node[pos=0.2] {$\xd$} (sum_e);
+
+		\draw [->] (sum_e) -- node {$\xe$} (kp);
+		\draw [->] (kp) -- (sum_d);
+		\draw [->] (sum_d) -- (ja_t);
+		\draw [->] (ja_t) -- (sum_g);
+		\draw [->] (sum_g) -- node {$\vect \tau$} (robot);
+
+		\draw [->] (robot.east |- odq) -- node [pos=0.8] {$\dq$} node [node, name=dq, pos=0.6] {} (odq);
+		\draw [->] (robot.east |- oq) -- node [pos=0.8, below] {$\q$} node [node, name=q, pos=0.3] {} (oq);
+
+		\node [node] at (q |- g) {};
+		\draw [->] (q |- g) -- (g);
+		\draw [->] (g) -| (sum_g);
+
+		\draw [->] (q) -- +(0,1.2) -| (ja);
+
+		\draw [->] (dq) |- (ja);
+		\draw [->] (ja) -- node {$\dx$} (kd);
+		\draw [->] (kd) -| node[pos=0.9] {$-$} (sum_d);
+		\draw [->] (k) -| node[pos=0.2] {$\xs$} node[pos=0.95] {$-$} (sum_e);
+
+		\draw [->] (q) |- (k);
+		\draw [->] (q_f) -- (ja_t);
+	\end{tikzpicture}
+	%}
+	\caption{PD and gravity compensation in the operational space}
+	\label{fig:pd-gravity-operational}
+\end{figure}
