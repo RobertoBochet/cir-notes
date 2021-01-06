@@ -181,7 +181,7 @@ You can see the implemented control system in the \autoref{fig:pd-gravity}.
 	\label{fig:pd-gravity}
 \end{figure}
 
-\subsection{Inverse dynamics control}
+\subsection{Inverse dynamics control}\label{subsec:inverse-dynamics-control-joints-space}
 
 Let us try to solve the problem of the trajectory tracking.
 we rewrite the \autoref{eq:simplified-dynamics} in the form
@@ -198,9 +198,9 @@ with
 
 If $\matr B(\q)$ is full rank for each configuration of the manipulator we can define the control law called \textbf{inverse dynamics}\index{inverse dynamics}
 
-\[
-	\vect \tau = \matr{B}(\q)\vect y + \vect n(\q,\dq)
-\]
+\begin{equation}
+    \vect \tau = \matr{B}(\q)\vect y + \vect n(\q,\dq)\label{eq:control-law-inverse-dynamics-control-joints-space}
+\end{equation}
 
 so, if the system knowledge is perfect, this law impose the dynamics $\ddq = \vect y$;
 from the extern the overall system appears as a double integrator.
@@ -858,6 +858,7 @@ evaluated in the equilibrium $\dq = 0, \ddq = 0$
 \]
 
 so, if the Jacobian is full rank the only solution is $\xe = 0$, thus the system is globally asymptotically stable with the equilibrium $\xd = \x$.
+You can see the corresponding scheme in \autoref{fig:pd-gravity-operational}
 
 \begin{figure}[htb]
 	\centering
@@ -911,4 +912,131 @@ so, if the Jacobian is full rank the only solution is $\xe = 0$, thus the system
 	%}
 	\caption{PD and gravity compensation in the operational space}
 	\label{fig:pd-gravity-operational}
+\end{figure}
+
+\subsection{Inverse dynamics control}
+
+To tracking a trajectory the \textbf{PD + gravity compesation} is not usable (it is constrained by $\dxd = 0$), so we have to implement a different control system, in particular we can adapt the \textbf{inverse dynamics control} designed to the control in the \textbf{joints space} saw in \autoref{subsec:inverse-dynamics-control-joints-space}.
+
+As we saw if we impose the control law in \autoref{eq:control-law-inverse-dynamics-control-joints-space} we get that $\ddq = \y$, so we have to design a new input $\y$ in such a way to allow the trackinf of the trajectory $\xd(t)$.
+A way to do this is notice that
+
+\[
+	\ddx = \frac{d}{dt} \dx = \frac{d}{dt} \left( \J_A(\q)\dq \right) = \J_A(\q)\ddq + \dJ_A(\q,\dq)\dq
+\]
+
+so we can invert the function and get
+
+\[
+	\ddq = \J_A^\inv(\q) \left(\ddx - \dJ_A(\q,\dq)\dq\right)
+\]
+
+this suggests that a possible control law for $\y$ can be
+
+\[
+	\y = \J_A^\inv(\q) \left( \ddxd + \K_D\dxe + \K_P \xe - \dJ_A(\q,\dq)\dq \right)
+\]
+
+so the overall control law become
+
+\[
+	\vect\tau = \B(\q) \J_A^\inv(\q) \left( \ddxd + \K_D\dxe + \K_P \xe - \dJ_A(\q,\dq)\dq \right) + \vect n(\q,\dq)
+\]
+
+Let us find the error dynamics beginning from the dynamic model subject the above control law
+
+\begin{align*}
+    \matr{B}(\q)\ddq + \vect n(\q,\dq) &= \B(\q) \J_A^\inv(\q) \left( \ddxd + \K_D\dxe + \K_P \xe - \dJ_A(\q,\dq)\dq \right) + \vect n(\q,\dq) \\
+    \matr{B}(\q)\ddq &= \B(\q) \J_A^\inv(\q) \left( \ddxd + \K_D\dxe + \K_P \xe - \dJ_A(\q,\dq)\dq \right) \\
+    \0 &= \ddxd + \K_D\dxe + \K_P \xe - \dJ_A(\q,\dq)\dq - \J_A(\q) \ddq \\
+    \intertext{substitute $\ddq$}
+    \0 &= \ddxd + \K_D\dxe + \K_P \xe - \dJ_A(\q,\dq)\dq - \ddx - \dJ_A(\q,\dq)\dq \\
+    \0 &= \ddxd + \K_D\dxe + \K_P \xe - \ddx \\
+    \intertext{recognize $\ddxe = \ddxd - \ddx$}
+    \0 &= \ddxe + \K_D\dxe + \K_P \xe \\
+\end{align*}
+
+So the dynamics of the error in the operative space is characterized by a second order function with  $\K_P, \K_D$ arbitrarly assigned.
+You can see the schema in \autoref{fig:inverse-dynamics-control-operational-space}.
+
+\begin{nb}to compute the control law we have to invert the Jacobian $\J_A^\inv$, thus this method can not been used for the control of the \textbf{redundant robots} or for robots in \textbf{singular configurations}\end{nb}
+
+
+\begin{figure}[htb]
+	\centering
+	\resizebox{\textwidth}{!}{
+		\begin{tikzpicture}
+			\node [input] (iq_d) {};
+			\node [input, above=1.5cm of iq_d] (idq_d) {};
+			\node [input, above=1.5cm of idq_d] (iddq_d) {};
+
+			\node [sum, right=0.8cm of iq_d] (sum_e) {};
+			\node [sum, right=1.5cm of idq_d] (sum_de) {};
+
+			\node [block, right=0.6cm of sum_de] (kd) {$\matr K_D$};
+			\node [block] at (sum_e -| kd) (kp) {$\matr K_P$};
+
+			\node [spy, right=0.5cm of kd] (bend) {};
+			\node [sum, right=1.5cm of kd] (sum_y) {};
+
+			\node [block, right=0.6cm of sum_y] (ja_inv) {$\J_A^\inv(\cdot)$};
+			\node [block, right=0.6cm of ja_inv] (b) {$\B(\cdot)$};
+			\node [sum, right=0.6cm of b] (sum_t) {};
+			\node [block, right=0.6cm of sum_t] (robot) {Robot};
+
+			\node [block, below=0.5cm of robot] (n) {$\n(\cdot,\cdot)$};
+
+			\node [output, right=1.5cm of robot, yshift=0.3cm] (odq) {};
+			\node [output, right=1.5cm of robot, yshift=-0.3cm] (oq) {};
+
+
+			\draw [->] (iq_d) -- node [pos=0.3] {$\xd$} (sum_e);
+			\draw [->] (idq_d) -- node [pos=0.15] {$\dxd$} (sum_de);
+			\draw [->] (iddq_d) -- node [pos=0.05] {$\ddxd$} (bend |- iddq_d) -- (sum_y);
+
+			\draw [->] (sum_e) -- node [pos=0.7] {$\xe$} (kp);
+			\draw [->] (sum_de) -- node {$\dxe$} (kd);
+
+			\draw [->] (kp) -- (bend |- kp) -- (sum_y);
+			\draw [->] (kd) -- (sum_y);
+
+			\draw [->] (sum_y) -- (ja_inv);
+			\draw [->] (ja_inv) -- node {$\y$} (b);
+			\draw [->] (b) -- (sum_t);
+			\draw [->] (sum_t) -- node {$\vect\tau$} (robot);
+
+			\draw [->] (robot.east |- odq) -- node [pos=0.8] {$\dq$} node [node, name=dq, pos=0.3] {} (odq);
+			\draw [->] (robot.east |- oq) -- node [pos=0.8, below] {$\q$} node [node, name=q, pos=0.6] {} (oq);
+
+			\draw [->] (n) -| (sum_t);
+
+			\node [node, yshift=0.3cm] at (q |- n) (q_n) {};
+			\node [node, yshift=-0.3cm] at (dq |- n) (dq_n) {};
+			\draw [->] (q_n) -- (q_n -| n.east);
+			\draw [->] (dq_n) -- (dq_n -| n.east);
+
+			\node [node, above=1cm of b] (q_a) {};
+			\draw [->] (q) |- (q_a) -| (ja_inv);
+			\draw [->] (q_a) -- (b);
+
+			\node [block, below=1.5cm of kp] (k) {$\vect k(\cdot)$};
+			\draw [->] (q) |- (k);
+			\draw [->] (k) -| node [pos=0.95] {$-$} node[pos=0.15, above] {$\xs$} (sum_e);
+
+			\node [block, below=2cm of ja_inv] (ja) {$\J_A(\cdot)$};
+			\node [node] at (ja |- k) (q_ja) {};
+			\draw [->] (dq) |- (ja);
+			\draw [->] (ja) -| node[pos=0.95] {$-$} node[pos=0.05, above] {$\dxs$} (sum_de);
+			\draw [->] (q_ja) -- (ja);
+
+			\node [block, below=1cm of b] (dja) {$\dJ_A(\cdot,\cdot)$};
+			\node [node, xshift=0.3cm] at (dja |- k) (q_dja) {};
+			\node [node, xshift=-0.3cm] at (dja |- ja) (dq_dja) {};
+			\draw [->] (dja) -| node [pos=0.9, right] {$-$} (sum_y);
+			\draw [->] (q_dja) -- (dja.south -| q_dja);
+			\draw [->] (dq_dja) -- (dja.south -| dq_dja);
+		\end{tikzpicture}
+	}
+	\caption{Inverse dynamics control in the operational space}
+	\label{fig:inverse-dynamics-control-operational-space}
 \end{figure}
