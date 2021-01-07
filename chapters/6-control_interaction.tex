@@ -1,0 +1,157 @@
+\chapter{Control of the interaction}\label{ch:interaction-control}
+
+In this chapter we will analyze how the robot interact with the environment, and we will develop techniques to perform this task based on the control of the forces acting on the robot (generally on the end effector).
+
+This kind of study is essential for the robots will interact with humans (collaborative robots).
+
+\paragraph{Passive control of compliance}
+
+In some tasks to the robots are requested a certain degree of flexibility in contrast to the request of the trajectory requested is strictly followed ($\x(t)=\xd(t)$), for example in an assembly task where it is required to insert an element in a hole (the alignment of end effector with the hole might be not perfect), in this case the problem can be bypassed equipping the robot with an \textbf{Remote Center of Compliance}\index{Remote Center of Compliance}\footnote{\url{https://en.wikipedia.org/wiki/Remote_Center_Compliance}}.
+The RCC placed between the robot's wrist and the gripper introduces a form of compliance for the axis perpendicular to the approach one, correcting misalignment in a passive way.
+
+More flexibility behaviour can be gotten with an active control.
+
+\paragraph{Forces measurements}
+
+The measurements of forces and moments are provided by forces sensors that return the measurements of these alone the three axis bound on a local frame (generally in the proximity of the end effector).
+
+The forces sensors are generally based on \textbf{strain gauges}\index{strain gauges}\footnote{\url{https://en.wikipedia.org/wiki/Strain_gauge}} (a device that changes its conductance in function of strain).
+The strain gauges are suitable mounted in way to allow the measure of the six component of forces and moments.
+
+\section{Forces in statics}
+
+Let us start from the study of the robots' statics subjected to forces (and moments) acting on the end-effector.
+We will use the principle of the virtual works.
+For the torques joints we find the contribution as
+
+\[
+	dW_\tau = \vect\tau^\trans d\q
+\]
+
+and for the forces on the end effector
+
+\[
+	dW_\gamma = \vect f^\trans d\vect p_e + \vect\mu^\trans \vect\omega_e dt
+\]
+
+with $\vect f$ and $\vect\mu$ are respectively the resulting force and moment act on the end effector.
+Exploiting the \textbf{geometrical Jacobian} we can write $dW_\gamma$ as a function of $\q$
+
+\[
+	dW_\gamma = \vect f^\trans \J_P(\q) d\q + \vect\mu^\trans \J_O(\q) d\q = \vect\gamma^\trans \J(\q) d\q
+\]
+
+where the resulting force and moment are written in the vector $\vect\gamma = \begin{bmatrix} \vect f^\trans & \vect\mu^\trans \end{bmatrix}^\trans$.
+The elementary movement and the virtual movement coincide, so we can write
+
+\begin{align*}
+	\delta W_\tau &= \vect\tau^\trans \delta\q \\
+	\delta W_\gamma &= \vect\gamma^\trans \J(\q) \delta\q
+\end{align*}
+
+The robot is in a static state if $\delta W_\tau = \delta W_\gamma$, that is satisfied with
+
+\[
+	\vect\tau = \J^\trans(\q) \vect\gamma
+\]
+
+\begin{nb}the static relation shows a duality with the robot kinetics that can be written in the form $\vect v_e = \J(\q) \dq$ (\textbf{kineto-static duality}\index{kineto-static duality})\end{nb}
+
+\begin{nb}if $\vect\gamma \in \ker(\J^\trans)$, then it does not require any joint torque to balance $\vect\gamma$\end{nb}
+
+
+\section{The concept of impedance}
+
+With a generalized approach we can state that for a dynamical system a power \textbf{flow} tent to change a generalized \textbf{effort}.
+We can easily see this behaviour in an electrical system, where the flow is the current and the effort is the voltage, the relation between these two measure is expressed by the impedance.
+In a mechanical system we can find this duality with \textbf{force} (flow) and the \textbf{position} (effort).
+So we can define the mechanical impedance and design a control system based on it.
+
+
+Let us consider a 1 dof mass ($M$) on which acting two forces ($u, f$) (where $a$ is the mass' acceleration)
+
+\[
+	M a = u + f
+\]
+
+we introduce a couple spring-dumper acting on the mass through $u$
+
+\[
+	u = - k_d v - K_e p
+\]
+
+where we indicted with $v, p$ respectively the mass' speed and position.
+So the system become
+
+\[
+	M a + k_d v + K_e p = f
+\]
+
+So we defined a relation between the force and the position (and its derivation) in a \textbf{mass-spring-damper} system;
+we will call this relation \text{mechanical impedance}.
+
+\subsection{Dynamics model with external forces}
+
+Let us try to extend the concept of mechanical impedance to the robots control.
+We consider the dynamical system with a $\vect\gamma$ force (and moment) acting on the end effector
+
+\[
+	\B(\q)\ddq + \C(\q,\dq)\dq + \g(\q) = \vect\tau - \J^\trans(\q)\vect\gamma
+\]
+
+and we consider the control law based on the inverse dynamics
+
+\[
+	\vect\tau = \B(\q)\y + \C(\q,\dq)\dq + \g(\q)
+\]
+
+if we substitute it we get
+
+\[
+	\ddq = \y - \B^\inv(\q)\J^\trans(\q)\vect\gamma
+\]
+
+now, assume for $\y$ the control law we saw for the inverse dynamic control in operative space (\autoref{eq:control-law-inverse-dynamics-operational-space}), for the closed loop we get
+
+\begin{align*}
+	\ddq &= \J_A^\inv(\q) \left( \ddxd + \K_D\dxe + \K_P \xe - \dJ_A(\q,\dq)\dq \right) - \B^\inv(\q)\J^\trans(\q)\vect\gamma \\
+	\J_A(\q)\ddq + \dJ_A(\q,\dq)\dq &= \ddxd + \K_D\dxe + \K_P \xe - \J_A(\q)\B^\inv(\q)\J^\trans(\q)\vect\gamma \\
+	\intertext{recognizing $\J_A\ddq + \dJ_A(\q,\dq)\dq = \ddx$}
+	\ddx &= \ddxd + \K_D\dxe + \K_P \xe - \J_A(\q)\B^\inv(\q)\J^\trans(\q)\vect\gamma \\
+	\ddxe + \K_D\dxe + \K_P \xe &= \J_A(\q)\B^\inv(\q)\J^\trans(\q)\vect\gamma \\
+	\intertext{defining $\J^\trans(\q)\vect\gamma = \J_A^\trans(\q)\vect\gamma_A$}
+	\ddxe + \K_D\dxe + \K_P \xe &= \J_A(\q)\B^\inv(\q)\J_A^\trans(\q)\vect\gamma_A \\
+	\intertext{and introducing $\B_A(\q) = \J_A^{-\trans}(\q)\B(\q)\J_A^\inv(\q)$}
+	\ddxe + \K_D\dxe + \K_P \xe &= \B_A^\inv(\q)\vect\gamma_A
+\end{align*}
+
+we get an impedance relation, which is coupled and only partially assignable.
+But if we have also the forces' measurement we can change the control laws to exploit them
+
+\begin{align*}
+    \vect\tau &= \B(\q)\y + \C(\q,\dq)\dq + \g(\q) + \J^\trans(\q)\gamma \\
+    \y &= \J_A^\inv(\q) \matr M_d^\inv \left( \matr M_d \ddxd + \matr D_d\dxe + \K_d \xe - \matr M_d \dJ_A(\q,\dq)\dq - \vect\gamma_A \right)
+\end{align*}
+
+with $\matr M_d, \matr D_d, \K_d$ diagonal positive definite matrices;
+the closed loop become
+
+\[
+	\matr M_d \ddxe + \matr D_d \dxe + \K_d \xe = \vect\gamma_A
+\]
+
+so, a completely decoupled system.
+
+This form defines a \textbf{mechanical impedance} between the forces ( and moments) and the position error in the operational space.
+
+\begin{nb}the \textbf{mechanical impedance} have the same shape of a mass-spring-damper system  with $\matr M_d$ mass, $\matr D_d$ damping and $\K_d$ stiffness\end{nb}
+
+Unluckily this method impose several constraints:
+
+\begin{itemize}
+	\item it requires a complete knowledge of the dynamic model, it does not guarantee a compensation of the model errors
+	\item it requires complete access to the robot, the control law is design directly on joints torques
+	\item the system become inherently compliant to external disturbances, which is conflicting with the typical stiffness required to the industrial robots
+\end{itemize}
+
+\warning{missing admittance control}

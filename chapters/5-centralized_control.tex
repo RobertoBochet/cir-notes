@@ -933,9 +933,9 @@ so we can invert the function and get
 
 this suggests that a possible control law for $\y$ can be
 
-\[
-	\y = \J_A^\inv(\q) \left( \ddxd + \K_D\dxe + \K_P \xe - \dJ_A(\q,\dq)\dq \right)
-\]
+\begin{equation}
+    \y = \J_A^\inv(\q) \left( \ddxd + \K_D\dxe + \K_P \xe - \dJ_A(\q,\dq)\dq \right)\label{eq:control-law-inverse-dynamics-operational-space}
+\end{equation}
 
 so the overall control law become
 
