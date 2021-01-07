@@ -154,4 +154,48 @@ Unluckily this method impose several constraints:
 	\item the system become inherently compliant to external disturbances, which is conflicting with the typical stiffness required to the industrial robots
 \end{itemize}
 
-\warning{missing admittance control}
+\subsection{Admittance control}
+
+Defining the \textbf{admittance filter} function (the inverse of the impedance)
+
+\[
+	H(s) = \frac{1}{\matr M_d s^2 + \matr D_d s + \K_d}
+\]
+
+we can make the control system in \autoref{fig:admittance-control-interaction}.
+In which
+
+\[
+	\xd - \x \approx \frac{1}{\matr M_d s^2 + \matr D_d s + \K_d} \vect f_{ext}
+\]
+
+\begin{figure}[htb]
+	\centering
+	\resizebox{0.7\textwidth}{!}{
+		\begin{tikzpicture}
+			\node [input] (ix_d) {};
+
+			\node [sum, right=1cm of ix_d] (sum_f) {};
+			\node [sum, right=1cm of sum_f] (sum_e) {};
+
+			\node [block, right=1cm of sum_e] (controller) {High gain\\motion\\controller};
+			\node [block, right=1cm of controller] (robot) {Robot};
+			\node [block, above left=0.8cm and -0.5cm of controller] (admittance) {$H(s)$};
+
+			\node [output, right=1cm of robot] (ox) {};
+
+			\draw [->] (ix_d) -- node [pos=0.3] {$\xd$} (sum_f);
+			\draw [->] (sum_f) -- (sum_e);
+			\draw [->] (sum_e) -- (controller);
+			\draw [->] (controller) -- (robot);
+			\draw [->] (robot) -- node [pos=0.8] {$\x$} node [node, name=x, pos=0.5] {} (ox);
+
+			\draw [->] (robot) |- node[pos=0.2, right] {$\vect f_{ext}$} (admittance);
+			\draw [->] (admittance) -| (sum_f);
+
+			\draw [->] (x) -- ++(0,-1.5) -| node [pos=0.95] {$-$} (sum_e);
+		\end{tikzpicture}
+	}
+	\caption{Admittance control}
+	\label{fig:admittance-control-interaction}
+\end{figure}
