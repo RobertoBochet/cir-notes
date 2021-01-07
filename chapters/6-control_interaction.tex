@@ -199,3 +199,73 @@ In which
 	\caption{Admittance control}
 	\label{fig:admittance-control-interaction}
 \end{figure}
+
+\section{Natural constraints and artificial constraints}
+
+It is generally impossible to assign simultaneously an arbitrary position and force to a system, but in some task a control both on position and force is required, to handle this requirement we define a new concept based on constraints.
+
+In the 3d space (with reference to a frame) we can identify 6 dof for the generalized movement velocity, 3 for the lineal speed ($v_x,v_y,v_z$) and 3 for the rotational speed ($\omega_x,\omega_y,\omega_z$) to which we can associate 6 generalized forces (or moments), 3 linear forces ($f_x,f_y,f_z$) and 3 torques ($\mu_x,\mu_y,\mu_z$).
+
+So, we can define two kinds of constraints on this 12 variables:
+
+We will call \textbf{natural constraints} ones that impose a limitation on a generalized movement velocity and forces, these are the constraints imposed by the environment.
+\\ \begin{em}e.g. a rigid plane impose a limit on the linear speed $v_n$ in the direction defines by the plane normal, instead the absence of an obstacle in the generic direction of vector unit $\vect u$ (that is opposed to the motion) can not allow the imposition of the associated linear force $f_u$.\end{em}
+
+We will call \textbf{artificial constraints} ones we can impose to the system arbitrarily
+\\ \begin{em}e.g. a pipe in a hole allows to impose an artificial constraints on the rotation velocity $\omega_l$ of the pipe in the hole (where $\vect l$ is vector unit in the direction of the pipe longitudinal axis)\end{em}
+
+It is evident that the artificial and natural constraints are complementary, and they suggest the control approach where the desire functions are defined only for the \textbf{artificial constraints}, while the state subject to the \textbf{natural constraints} are free to evolve.
+
+So we can define the useful diagonal matrix $\matr \Sigma$ ($6\times6$) with only zeros or ones as elements called \textbf{selection matrix}\index{selection matrix}.
+
+The $\matr \Sigma$ matrix is defined to weight the error on the reference for controlled forces the element (i,i) of the matrix is $1$ for the others $0$.
+
+An approximate scheme of the control based on this approach can see in \autoref{fig:hybrid-control-interaction}, it is called \textbf{hybrid force/position control} and it is characterized by a high flexibility.
+It is possible identify some inconsistencies can appear due to nominal model used:
+
+\begin{itemize}
+	\item a detected force in nominally free direction caused by a friction at the contact
+	\item a detected movement speed in nominally constrained direction caused by compliance in the robot structure or contact
+	\item uncertainty in the environment geometry at the contact
+\end{itemize}
+
+The first two are automatically filtered by the select matrix, the third can be mitigated by real time estimation process.
+
+\begin{figure}[htb]
+	\centering
+	%\resizebox{0.7\textwidth}{!}{
+		\begin{tikzpicture}
+			\node [input] at (0,1) (ifd) {};
+			\node [input] at (0,-1) (idxd) {};
+
+			\node [block, right=1 of ifd] (sel_f) {$\matr \Sigma$};
+			\node [block, right=1 of idxd] (sel_dx) {$\I - \matr \Sigma$};
+			\draw [->] (ifd) -- node[pos=0.1] {$\reference{\vect\gamma}$} (sel_f);
+			\draw [->] (idxd) -- node[pos=0.1] {$\dxd$} (sel_dx);
+
+			\node [block, right=1 of sel_f] (control_f) {Force\\control};
+			\node [block, right=1 of sel_dx] (control_dx) {Motion\\control};
+			\draw [->] (sel_f) -- (control_f);
+			\draw [->] (sel_dx) -- (control_dx);
+
+			\node [block, above=0.5 of control_f] (sel_ff) {$\matr \Sigma$};
+			\node [block, below=0.5 of control_dx] (sel_dxf) {$\I - \matr \Sigma$};
+			\draw [->] (sel_ff) -- (control_f);
+			\draw [->] (sel_dxf) -- (control_dx);
+
+			\node [sum] at ($(control_f)!0.5!(control_dx) + (2,0)$) (sum) {};
+			\draw [->] (control_f) -| (sum);
+			\draw [->] (control_dx) -| (sum);
+
+			\node [output, right=1 of sum] (u) {};
+			\draw [->] (sum) -- node[pos=0.9] {$\vect\tau$} (u);
+
+			\node [input] at (u |- sel_ff) (iff) {};
+			\node [input] at (u |- sel_dxf) (idxf) {};
+			\draw [->] (iff) -- node[pos=0.1] {$\estimate{\vect\gamma}$} (sel_ff);
+			\draw [->] (idxf) -- node[pos=0.1] {$\dxs$} (sel_dxf);
+		\end{tikzpicture}
+	%}
+	\caption{Hybrid force/position control}
+	\label{fig:hybrid-control-interaction}
+\end{figure}
