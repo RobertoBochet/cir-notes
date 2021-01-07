@@ -1,6 +1,6 @@
 \chapter{Kinematic redundancy}\label{ch:kinematic-redundancy}
 
-We let $\vect{p}=k(\q)$ where $p$ is the pose of the end effector in the task space, $\q$ the joint configuration.
+We let $\x=k(\q)$ where $\x$ is the pose of the end effector in the task space, $\q$ the joint configuration.
 The kinematic function $k(\cdot)$ provides the transformation from the joint space $\mathbb{R}^n$ to the task space $\mathbb{R}^m$.
 
 A robot is kinematically redundant if $n > m$.
@@ -9,14 +9,14 @@ A robot is kinematically redundant if $n > m$.
 
 \section{Inverse kinematics}
 
-\[ \q=k^{-1}(\vect{p}) \]
+\[ \q=k^{-1}(\x) \]
 
 When a robot is kinematically redundant the inversion of the kinematics gives infinite solutions and there are internal motion that not affect the pose of the end effector.
 
 To solve this issue the problem is usually addressed in the speed domain.
 
 \begin{equation}
-	\dot{\vect{p}} = \J(\q) \dq
+	\dx = \J(\q) \dq
 	\label{eq:inverse-constraint}
 \end{equation}
 
@@ -32,11 +32,11 @@ The null space exists only for a redundant robot.
 
 So we can compose a movement as
 
-\[ \dq = \dq^* + \matr{P} \dq_0 \quad \text{where} \quad \im(\matr{P}) \equiv \ker(\matr{J}) \]
+\[ \dq = \dq^* + \matr{P} \dq_0 \quad \text{where} \quad \im(\matr{P}) \equiv \ker(\J) \]
 
 with $P \dot{q}_0$ that does not contribute to the movement of the end effector, in fact if we multiply the equation to J from left we get
 
-\[ \J\dq = \J\dq^* + \J P \dq_0 = \J \dq^* = \dot{\vect{p}} \]
+\[ \J\dq = \J\dq^* + \J P \dq_0 = \J \dq^* = \dx \]
 
 where $J P \dq_0 = 0$ for each $\dq_0$.
 
@@ -48,9 +48,9 @@ We can approach to the problem like a optimization one, as first thing we define
 
 $\matr{W}$ is a symmetrical weight matrix $(n \times n)$ and $\matr{W} > 0$
 
-we want to find the optimal solution under the constraint $\dot{p} = \matr{W}(q) \dot{q}$ so we can use the Lagrange multiplier
+we want to find the optimal solution under the constraint $\dx = \matr{W}(q) \dq$ so we can use the Lagrange multiplier
 
-\[ \mathcal{L}(\dq, \vect{\lambda}) = \frac{1}{2} \dq^T \matr{W} \dq + \lambda^T (\dot{p} - \J \dq)\]
+\[ \mathcal{L}(\dq, \vect\lambda) = \frac{1}{2} \dq^T \matr{W} \dq + \lambda^T (\dx - \J \dq)\]
 
 \[
 	\left(\frac{\partial \mathcal{L}}{\partial \dq}\right)^\trans = 0 \quad
@@ -59,24 +59,24 @@ we want to find the optimal solution under the constraint $\dot{p} = \matr{W}(q)
 
 from these we get
 
-\[ \matr{W}\dq - \J^T\vect{\lambda} = 0 \qquad \dot{\vect{p}} - \J\dq = 0 \]
+\[ \matr{W}\dq - \J^T\vect{\lambda} = 0 \qquad \dx - \J\dq = 0 \]
 
 to combine the two equation we can find $\vect{\lambda}$
 
 \[
-\dot{\vect{p}} = \J\matr{W}^{-1}\J^\trans \vect{\lambda} \implies
-\vect{\lambda} = (\J\matr{W}^{-1}\J^\trans)^{-1} \dot{\vect{p}}
+\dx = \J\matr{W}^{-1}\J^\trans \vect{\lambda} \implies
+\vect{\lambda} = (\J\matr{W}^{-1}\J^\trans)^{-1} \dx
 \]
 
 and with a recombination with the first equation we get the solution
 
 \begin{gather*}
-	\dq = \matr{W}^{-1} \J^\trans (\J\matr{W}^{-1}\J^\trans)^{-1} \dot{\vect{p}} \\
-	\text{special case} \quad \matr{W} = \matr{I} \implies \dq = \J^\psinv \dot{\vect{p}}
+	\dq = \matr{W}^{-1} \J^\trans (\J\matr{W}^{-1}\J^\trans)^{-1} \dx \\
+	\text{special case} \quad \matr{W} = \I \implies \dq = \J^\psinv \dx
 \end{gather*}
 
 The matrix $\J^\psinv = \J^\trans (\J\J^\trans)^{-1}$ is called \textbf{right pseudo inverse} matrix.
-With dualism, we can define the matrix $\J^\psinv_W = \matr{W}^{-1} \J^\trans (\J\matr{W}^{-1}\J^\trans)^{-1}$ calling \textbf{weighted pseudo inverse} matrix.
+With dualism, we can define the matrix $\J^\psinv_W = \matr{W}^\inv \J^\trans (\J\matr{W}^\inv\J^\trans)^\inv$ calling \textbf{weighted pseudo inverse} matrix.
 
 \subsection{Finding a solution exploiting redundant}
 
@@ -88,17 +88,19 @@ We consider a new cost function
 
 To find a solution under the constraint \ref{eq:inverse-constraint} close to $\dq_0$.
 
-\[ \mathcal{L}'(\dq, \vect{\lambda}) = \frac{1}{2} (\dq - \dq_0)^T (\dq - \dq_0) + \vect{\lambda}^T (\dot{\vect{p}} - \J \dq) \]
+\[ \mathcal{L}'(\dq, \vect{\lambda}) = \frac{1}{2} (\dq - \dq_0)^T (\dq - \dq_0) + \vect{\lambda}^T (\dx - \J \dq) \]
 
 From $\frac{\partial \mathcal{L}'}{\partial \dq} = 0$ and the constraint~\ref{eq:inverse-constraint} we can get $\vect{\lambda}$
 
-\[\vect{\lambda} = (\J\J^\trans)^{-1} (\dot{\vect{p}} - \J\dq_0)\]
+\[\vect{\lambda} = (\J\J^\trans)^{-1} (\dx - \J\dq_0)\]
 
 then we get the solution
 
-\[ \dq = \J^\psinv \dot{\vect{p}} + (\matr{I} - \J^\psinv \J) \dq_0 \]
+\begin{equation}
+    \dq = \J^\psinv \dx + (\matr{I} - \J^\psinv \J) \dq_0\label{eq:solution-null-space-method-redundancy}
+\end{equation}
 
-So we found $(\matr{I} - \J^\psinv \J)$ a solution for the matrix $\matr{P}$.
+So we found $(\I - \J^\psinv \J)$ a solution for the matrix $\matr{P}$.
 
 \subsubsection{Choosing $\dq_0$}
 
@@ -117,7 +119,7 @@ Choosing $w(\q)$ as a cost function to maximize to increase a specific performan
 	\[ w(\q) = \frac{1}{2n} \sum_{i=1}^{n} \left( \frac{q_i - \bar{q}_i}{q_{iM} - \bar{q}_{im}} \right)^2 \]
 
 	\item Distance from the \textbf{closet obstacle}
-	\[ w(\q) = \min_{\vect{p},\vect{o}}\norm{\vect{p}(\q)-\vect{o}} \]
+	\[ w(\q) = \min_{\x,\vect{o}}\norm{\x(\q)-\vect{o}} \]
 \end{itemize}
 
 $k_0 > 0$ can be arbitrary chosen. 
@@ -133,6 +135,100 @@ Mainly two possible issues
 
 A possible solution to these problems is the method called \textbf{repeatable} or \textbf{cyclic}
 
+The source of the problems above is the non repeatability of the kinematic inversion methods
 
-\warning{missing ciclicity, extended jacobian, and control}
+A way to solve the kinematic inversion problem is based on the \textbf{augmented Jacobian}\index{augmented Jacobian}, it consists in add an auxiliary task in order to completely bound the kinematic inversion problem;
+where the main task is expressed by $\x=\vect f(\q)$ and the auxiliary task $\y=\vect h(\q)$.
+Now we can introduce an enlarged version of the Jacobian that taking in account the auxiliary task.
 
+\[
+	\dx_{aug} =
+	\begin{bmatrix}\dx\\\dy\end{bmatrix} =
+	\begin{bmatrix} \J(\q) \\ \frac{\partial\vect h}{\partial\q} \end{bmatrix} \dq =
+	\J_{aug}(\q)\dq
+\]
+
+where $\J_{aug}$ is the \textbf{augmented Jacobian}.
+In this way the inverse kinematics problem is reduced to
+
+\[
+	\dq = \J_{aug}^\inv(\q) \dx_{aug}
+\]
+
+if now consider $\y$ constant we can write
+
+\[
+	\dq = \begin{bmatrix} \J(\q) \\ \frac{\partial\vect h}{\partial\q} \end{bmatrix}^\inv \begin{bmatrix}\dx\\\0\end{bmatrix}
+\]
+
+so we introduced additional holonomic constraints to the system, so the \textbf{augmented Jacobian} make the kinematic inversion \textbf{repeatable}.
+
+The holonomic constraints can be selected as for the conditions for constrained optimality of a given objective function.
+
+\begin{nb}the inversion of the \textbf{augmented Jacobian} may introduce new singularities called \textbf{algorithmic singularities}\index{algorithmic singularities}\end{nb}
+
+\section{Kinematic control}
+
+Exploiting the \autoref{eq:solution-null-space-method-redundancy} we can design a control law in the kinematic space (the robot dynamics is ignored) for a redundant robot.
+We can design a control law for the input $\dx$ of the inverted kinematic model, a simple control law could be
+
+\[
+	\dx = \dxd + \K (\xd - \xs)
+\]
+
+where $\xs = \vect k(\q)$.
+The overall system is
+
+\[
+	\dq = \J^\psinv \left( \dxd + \K (\xd - \xs) \right) + \left( \I - \J^\psinv(\q) \J(\q) \right) \dq_0
+\]
+
+the implemented scheme is shown in \autoref{fig:kinematic-control-method-redundancy}.
+
+\begin{figure}[htb]
+	\centering
+	%\resizebox{0.7\textwidth}{!}{
+	\begin{tikzpicture}
+		\node [input] (ixd) {};
+		\node [input, above=2 of ixd] (idxd) {};
+
+		\node [sum, right=1 of ixd] (sum_e) {};
+		\draw [->] (ixd) -- node[pos=0.2] {$\xd$} (sum_e);
+
+		\node [block, right=1 of sum_e] (k) {$\K$};
+		\draw [->] (sum_e) -- (k);
+
+		\node [sum, right=1 of k] (sum_v) {};
+		\draw [->] (k) -- (sum_v);
+		\draw [->] (idxd) -| node[pos=0.02] {$\dxd$} (sum_v);
+
+		\node [block, right=1 of sum_v] (j_psv) {$\J^\psinv(\cdot)$};
+		\draw [->] (sum_v) -- node {$\dx$} (j_psv);
+
+		\node [sum, right=1 of j_psv] (sum_dq) {};
+		\draw [->] (j_psv) -- (sum_dq);
+
+		\node [block, above=1 of sum_dq] (f_q0) {$I - \J^\psinv(\cdot) \J(\cdot)$};
+		\draw [->] (f_q0) -- (sum_dq);
+
+		\node [input, above=1 of f_q0] (idq0) {};
+		\draw [->] (idq0) -- node[pos=0.3] {$\dq_0$} (f_q0);
+
+		\node [integrator, right=1 of sum_dq] (int) {};
+		\draw [->] (sum_dq) -- node {$\dq$} (int);
+
+		\node [output, right=1 of int] (oq) {};
+		\draw [->] (int) -- node[node, name=q, pos=0.5] {} node[pos=0.8] {$\q$} (oq);
+		\draw [->] (q) |- (f_q0);
+
+		\node [block, below=1 of k] (knm) {$\vect k(\cdot)$};
+		\draw [->] (q) |- (knm);
+		\draw [->] (knm) -| node[pos=0.2] {$\xs$} node[pos=0.95] {$-$} (sum_e);
+
+		\node [node] at (knm -| j_psv) (q_j) {};
+		\draw [->] (q_j) -- (j_psv);
+	\end{tikzpicture}
+	%}
+	\caption{Kinematic control for a redundant robot}
+	\label{fig:kinematic-control-method-redundancy}
+\end{figure}
