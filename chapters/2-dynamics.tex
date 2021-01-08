@@ -143,6 +143,26 @@ The velocity can easily write as
 
 \begin{nb}$\matr{J}^{(l_i)}$ for a link $i$ include only the contribution of the joints $1, \dots, i$, so the column $i+1,\dots,n$ are equal to $\vect{0}$\end{nb}
 
+the single non-null column of $\J^{(l_i)}$ is defined as
+
+\[
+	\begin{bmatrix}
+		\vect j_{P_j}^{(l_i)} \\
+		\vect j_{O_j}^{(l_i)}
+	\end{bmatrix} =
+	\begin{cases}
+		\begin{bmatrix}
+			\vect z_{j-1} \\
+			\0
+		\end{bmatrix} & \text{for prismatic joint} \\\\
+		\begin{bmatrix}
+			\vect z_{j-1} \times (\vect p_{l_i} - \vect p_{j-1}) \\
+			\vect z_{j-1}
+		\end{bmatrix} & \text{for rotational joint} \\
+	\end{cases}
+\]
+
+
 \[
 	\mathcal{T}_{l_i} =
 	\frac{1}{2} m_i \dq^\trans \matr{J}_P^{(l_i)\trans} \matr{J}_P^{(l_i)} \dq +
@@ -229,7 +249,7 @@ Let us solve the three parts that compose the Lagrangian equation
 	\frac{\partial \mathcal{U}(\q)}{\partial q_i}
 	&= - \frac{\partial}{\partial q_i} \left(\sum_{j=1}^n m_j \vect{g}_0^\trans \vect{p}_j \right) \\
 	&= - \sum_{j=1}^n m_j \vect{g}_0^\trans \frac{\partial \vect{p}_j}{\partial q_i} \\
-	&= - \sum_{j=1}^n m_j \vect{g}_0^\trans \vect{J}_{P_i}^{(l_j)}(\q) \\
+	&= - \sum_{j=1}^n m_j \vect{g}_0^\trans \vect j_{P_i}^{(l_j)}(\q) \\
 	&= g_i(\q)
 \end{align*}
 
@@ -374,6 +394,49 @@ we consider the left side member, and we try to solve it
 We can notice that this equation coincides with the \autoref{eq:conservation-principle} only if the \autoref{eq:skew-symmetry-property} is satisfied.
 In conclusion, we can state that \autoref{eq:skew-symmetry-property} is satisfied for each matrix $\matr C$ because it is a direct consequence of the \textbf{principle of energy conservation} of the system.
 
+\subsection{Summary model}
+
+So, we summarize how to define a dynamics robot model
+
+\begin{equation*}
+	\B(\q)\ddq + \C(\q,\dq)\dq + \g(\q) = \vect\tau
+\end{equation*}
+
+let's try to define a procedure to write the equation's parameters
+
+\begin{enumerate}
+	\item Compute $\B(\q)$
+	\begin{enumerate}[label*=\arabic*.]
+		\item Compute the matrices $\J_P^{(l_i)}, \J_O^{(l_i)}$
+		\item Compute $\B(\q)$ as
+		\[
+			\B(\q) = \sum_{i=1}^n \left( m_i \matr{J}_P^{(l_i)\trans} \matr{J}_P^{(l_i)} +
+			\matr{J}_O^{(l_i)\trans} \matr{R}_i \matr{I}_i^i \matr{R}_i^\trans \matr{J}_O^{(l_i)} \right)
+		\]
+	\end{enumerate}
+
+	\item Compute $\C(\q,\dq)$
+	\begin{enumerate}[label*=\arabic*.]
+		\item Compute the \textbf{Christoffel symbols} $c_{ijk}$ for all combinations of $i,j,k$ in $\{1,\dots,n\}^3$, (remembering $c_{ijk} = c_{ikj}$), as
+		\[
+			c_{ijk} = \frac{1}{2} \left( \frac{\partial b_{ij}}{\partial q_k}
+			+ \frac{\partial b_{ik}}{\partial q_j} - \frac{\partial b_{jk}}{\partial q_i} \right)
+		\]
+		\item Compute the $\C(\q,\dq)$ element by element as
+		\[
+			c_{ij} = \sum_{k=1}^n c_{ijk}\dot{q}_k
+		\]
+	\end{enumerate}
+
+	\item (Optionally) As validation step you can check that $\dB-2\C$ is antisymmetric
+
+	\item Compute $\g(\q)$ elements with
+	\[
+		g_i(\q) = - \sum_{j=1}^n m_j \vect{g}_0^\trans \vect j_{P_i}^{(l_j)}(\q)
+	\]
+\end{enumerate}
+
+
 \subsection{Linearity in dynamic parameters}\label{subsec:linearity-in-dynamic-parameters}
 
 If we assume a simplified function for the static friction function
@@ -398,7 +461,31 @@ If we solve the \textbf{Lagrangian equations} with the above Lagrangian we find 
 
 where $\vect \pi$ is the vector get by the concatenation of $\vect \pi_i$ and $\matr Y(\q,\dq,\ddq)$ is a matrix called \textbf{regression matrix}\index{regression matrix}.
 
-\warning{Missing examples and parameters identification}
+\subsubsection{Parameters identification}
+
+It may be useful to develop a system to estimate the parameters vector $\vect\pi$ from experimental data due to the complexity of compute it via analytic method.
+Given a set of measures $\reference{\vect\tau}_1,\dots,\reference{\vect\tau}_m$ and the corresponding matrix $\reference{\matr Y}_1,\dots,\reference{\matr Y}_m$ (gotten from kinematics parameters and joints values $\q,\dq,\ddq$, measured or estimated).
+If we define
+
+\[
+	\reference{\vect\tau} = \begin{bmatrix} \reference{\vect\tau}_1 \\ \vdots \\ \reference{\vect\tau}_m \end{bmatrix}, \qquad
+	\reference{\matr Y} = \begin{bmatrix} \reference{\matr Y}_1 \\ \vdots \\ \reference{\matr Y}_m \end{bmatrix}
+\]
+
+we can write
+
+\[
+	\reference{\vect\tau} = \reference{\matr Y} \vect\pi
+\]
+
+this equation due to noise measures does not admit solution for $\vect\pi$ which it can be estimated with the \textbf{linear least squares method}\footnote{\url{https://en.wikipedia.org/wiki/Linear_least_squares}} as
+
+\[
+	\estimate{\vect\pi} = \left(\reference{\matr Y}^\trans \reference{\matr Y}\right)^\inv \reference{\matr Y}^\trans \reference{\vect\tau}
+	= \reference{\matr Y}^\psinv \reference{\vect\tau}
+\]
+
+The trajectories used to generate $\reference{\vect\tau}$ and $\reference{\matr Y}$ must be enough rich (good conditioning of matrix $\reference{\matr Y}^\trans \reference{\matr Y}$): they need to involve all components in the dynamic model.
 
 \section{Newton-Euler formulation}
 
