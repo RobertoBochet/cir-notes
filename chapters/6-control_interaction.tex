@@ -269,3 +269,255 @@ The first two are automatically filtered by the select matrix, the third can be 
 	\caption{Hybrid force/position control}
 	\label{fig:hybrid-control-interaction}
 \end{figure}
+
+\section{Explicit control}
+
+Consider a 1dof system with a mass $m$ subject to 2 forces $f, u$ subjected to the relation (where $x$ is the position of the mass)
+
+\[
+	  w + u = m \ddot{x}
+\]
+
+if we introduce a spring with law $-k x$ on $w$ we get
+
+\[
+	-k x + u = m \ddot{x}
+\]
+
+in the \textbf{Laplace} form
+
+\[
+x(s) = \frac{1}{m s^2 + k} u(s)
+\]
+
+so if we evaluated the reaction force on the other side $f$ of the spring we can get the relation
+
+\[
+	f(s) = \frac{k}{m s^2 + k} u(s)
+\]
+
+an equivalent block diagram can be seen in the \autofef{fig:spring-block-control-interaction}
+
+\begin{figure}[htb]
+	\centering
+	%\resizebox{0.7\textwidth}{!}{
+	\begin{tikzpicture}[node distance=1cm]
+		\node [input] (iu) {};
+
+		\node [sum, right=of iu] (sum) {};
+		\draw [->] (iu) -- node[pos=0.2] {$u$} (sum);
+
+		\node [block, right=0.6 of sum] (g) {$\frac{1}{m s^2}$};
+		\draw [->] (sum) -- (g);
+
+		\node [block, right=of g] (k) {$k$};
+		\draw [->] (g) -- node {$x$} (k);
+
+		\node [output, right=of k] (of) {};
+		\draw [->] (k) -- node[node] (f) {} node[pos=0.8] {$f$} (of);
+		\draw [->] (f) -- ++(0,1) -| node[pos=0.8] {$-$} (sum);
+	\end{tikzpicture}
+	%}
+	\caption{Spring-mass-environment interaction equivalent block diagram}
+	\label{fig:spring-block-control-interaction}
+\end{figure}
+
+The transfers function $\frac{F(s)}{U(s)}$ can be also written as
+
+\[
+	G_f(s) = \frac{\frac{k}{m}}{s^2 + \frac{k}{m}} = \frac{\omega_n^2}{s^2 + \omega_n^2}
+\]
+
+highlighting it presents 2 imaginary poles in $\pm i \sqrt{k/m}$ and for $k \to \infty$ then $G_f(s) \to 1$
+
+So we can close a loop around the force to regulate it (\autoref{fig:explicit-control-interaction})
+
+\begin{figure}[htb]
+	\centering
+	%\resizebox{0.7\textwidth}{!}{
+	\begin{tikzpicture}
+		\node [input] (if) {};
+
+		\node [sum, right=of if] (sum_e) {};
+		\draw [->] (if) -- node[pos=0.2] {$\reference{f}$} (sum_e);
+
+		\node [block, right=0.6 of sum_e] (r) {$R_f(s)$};
+		\draw [->] (sum_e) -- (r);
+
+		\node [sum, right=of r] (sum) {};
+		\draw [->] (r) -- node {$u$} (sum);
+
+		\node [block, right=0.6 of sum] (g) {$\frac{1}{m s^2}$};
+		\draw [->] (sum) -- (g);
+
+		\node [block, right=of g] (k) {$k$};
+		\draw [->] (g) -- node {$x$} (k);
+
+		\node [output, right=of k] (of) {};
+		\draw [->] (k) -- node[node] (f) {} node[pos=0.8] {$f$} (of);
+		\draw [->] (f) -- ++(0,1) -| node[pos=0.8] {$-$} (sum);
+		\draw [->] (f) -- ++(0,-1) -| node[pos=0.9] {$-$} (sum_e);
+	\end{tikzpicture}
+	%}
+	\caption{Explicit force control block diagram}
+	\label{fig:explicit-control-interaction}
+\end{figure}
+
+a good choice for $R_f(s)$ is a pure integrator
+
+\[
+	R_f(s) = \frac{K_{if}}{s}
+\]
+
+so we can directly assign $\omega_{cf}$ changing $K_{if} \approx \omega_{cf}$ if $\omega_{cf} < \omega_n$; with this choice the resonant frequency $\omega_n$ is out of the system bandwidth.
+
+\section{Implicit control}
+
+Now let us start to analyze the same system saw for the explicit control when a control loop on position is already closed (\autoref{fig:closed-position-control-interaction}).
+
+\begin{figure}[htb]
+	\centering
+	%\resizebox{0.7\textwidth}{!}{
+	\begin{tikzpicture}
+		\node [input] (ix) {};
+
+		\node [sum, right=of ix] (sum_e) {};
+		\draw [->] (ix) -- node[pos=0.2] {$\reference{x}$} (sum_e);
+
+		\node [block, right=0.6 of sum_e] (r) {$R(s)$};
+		\draw [->] (sum_e) -- (r);
+
+		\node [sum, right=of r] (sum) {};
+		\draw [->] (r) -- node {$u$} (sum);
+
+		\node [block, right=0.6 of sum] (g) {$G(s)$};
+		\draw [->] (sum) -- (g);
+
+		\node [block, right=of g] (k) {$k$};
+		\draw [->] (g) -- node[node] (x) {} node {$x$} (k);
+		\draw [->] (x) -- ++(0,-1) -| node[pos=0.9] {$-$} (sum_e);
+
+		\node [output, right=of k] (of) {};
+		\draw [->] (k) -- node[node] (f) {} node[pos=0.8] {$f$} (of);
+		\draw [->] (f) -- ++(0,1) -| node[pos=0.8] {$-$} (sum);
+	\end{tikzpicture}
+	%}
+	\caption{Closed loop on position}
+	\label{fig:closed-position-control-interaction}
+\end{figure}
+
+The corresponding closed loop is
+
+\[
+	\frac{f(s)}{\reference{x}(s)} = \frac{kR(s)G(s)}{1 + kG(s) + R(s)G(s)}
+\]
+
+which for infinitely contact stiffness ($k \to \infty$) become $\frac{f(s)}{\reference{x}(s)}=R(s)$ and $f \approx u$
+
+\begin{figure}[htb]
+	\centering
+	%\resizebox{0.7\textwidth}{!}{
+	\begin{tikzpicture}
+		\node [input] (if) {};
+		\node [block, right=of ix] (r) {$R(s)$};
+		\draw [->] (ix) -- node[pos=0.2] {$\reference{x}$} (r);
+
+		\node [block, right=of r] (g) {$\approx 1$};
+		\draw [->] (r) -- node {$u$} (g);
+
+		\node [output, right=of g] (of) {};
+		\draw [->] (g) -- node[pos=0.8] {$f$} (of);
+	\end{tikzpicture}
+	%}
+	\caption{Closed loop on position with infinite contact stiffness}
+	\label{fig:stiffness-closed-position-control-interaction}
+\end{figure}
+
+now, let us try to close a loop on the force with another controller.
+In particular, we can design a regulator composed by two action, one to compensate the position regulator influence ($C(s)$), and another one to impose the desired dynamics to $f$ ($R_f(s)$), you can see this system in \autoref{fig:explicit-block-control-interaction}.
+
+\begin{figure}[htb]
+	\centering
+	%\resizebox{0.7\textwidth}{!}{
+	\begin{tikzpicture}
+		\node [input] (ix) {};
+
+		\node [sum, right=of ix] (sum) {};
+		\draw [->] (ix) -- node[pos=0.2] {$\reference{f}$} (sum);
+
+		\node [block, right=0.6 of sum] (rf) {$R_f(s)$};
+		\draw [->] (sum) -- (rf);
+
+		\node [block, right=of rf] (c) {$C(s)$};
+		\draw [->] (rf) -- (c);
+
+		\node [block, right=of c] (r) {$R(s)$};
+		\draw [->] (c) -- node {$\reference{x}$} (r);
+
+		\node [block, right=of r] (g) {$\approx 1$};
+		\draw [->] (r) -- node {$u$} (g);
+
+		\node [output, right=of g] (of) {};
+		\draw [->] (g) -- node[node] (f) {} node[pos=0.8] {$f$} (of);
+		\draw [->] (f) -- ++(0,-1) -| node[pos=0.8] {$-$} (sum);
+	\end{tikzpicture}
+	%}
+	\caption{Closed loop on position with infinite contact stiffness}
+	\label{fig:explicit-block-control-interaction}
+\end{figure}
+
+Under the hypothesis that the position regulator is a PID
+
+\[
+	R(s) = k_P + k_I\frac{1}{s} + k_D s = \frac{k_D s^2 + k_P s + k_I}{s}
+\]
+
+we can design the compensator as
+
+\[
+	C(s) = \frac{1}{k_D s^2 + k_P s + k_I}
+\]
+
+so the open loop function become (\autoref{fig:compesanted-implicit-block-control-interaction})
+
+\[
+	L_f(s) = R_f(s) C(s) R(s) = \frac{1}{s} R_f(s)
+\]
+
+\begin{figure}[htb]
+	\centering
+	%\resizebox{0.7\textwidth}{!}{
+	\begin{tikzpicture}
+		\node [input] (if) {};
+
+		\node [sum, right=of if] (sum) {};
+		\draw [->] (if) -- node[pos=0.2] {$\reference{f}$} (sum);
+
+		\node [block, right=0.6 of sum] (rf) {$R_f(s)$};
+		\draw [->] (sum) -- (rf);
+
+		\node [integrator, right=of rf] (int) {};
+		\draw [->] (rf) -- (int);
+
+		\node [output, right=of int] (of) {};
+		\draw [->] (int) -- node[node] (f) {} node[pos=0.8] {$f$} (of);
+		\draw [->] (f) -- ++(0,-1) -| node[pos=0.8] {$-$} (sum);
+	\end{tikzpicture}
+	%}
+	\caption{Compensated implicit force control}
+	\label{fig:compesanted-implicit-block-control-interaction}
+\end{figure}
+
+We can take $R_f(s)$ as PI controller
+
+\[
+	R_f(s) = k_{P_f} + k_{I_f} \frac{1}{s}
+\]
+
+so finally the open loop function become
+
+\[
+	L_f(s) = \frac{s k_{P_f} + k_{I_f}}{s^2}
+\]
+
+the $\omega_{c_f}$ can be set as $\omega_{c_f} \approx k_{P_f}$
