@@ -1,0 +1,74 @@
+\chapter{Summary}\label{ch:summary}
+
+\section{Centralized control}
+
+\subsection{Control in joint space}
+
+\subsubsection{PD + gravity compensation}
+
+Control law
+\[
+	\vect \tau = \vect g(\q) + \matr K_P \tilde \q - \matr K_D\dq
+\]
+Lyapunov's function
+\[
+	V(\qe, \dq) = \frac{1}{2} \dq^\trans \matr B(\q) \dq + \frac{1}{2} \qe^\trans \matr K_P \qe
+\]
+Closed loop
+\[
+	\matr{B}(\q)\ddq + \matr{C}(\q,\dq)\dq = \matr K_P \tilde \q - \matr K_D\dq
+\]
+Block diagram in \autoref{fig:pd-gravity}
+
+\subsubsection{Inverse dynamic control}
+
+Control law
+\begin{align*}
+	\vect \tau &= \B(\q)\y + \n(\q,\dq) \\
+	\y &= \matr K_P \qe + \matr K_I \dqe + \ddqd
+\end{align*}
+Open loop
+\[
+	\ddq = \vect y
+\]
+Closed loop
+\[
+	\ddqe + \matr K_D \dqe + \matr K_P \qe = 0
+\]
+Block diagram in \autoref{fig:inverse-dynamics-control}
+
+\subsection{Control in operational space}
+
+\subsubsection{PD + gravity compensation}
+
+Control law
+\[
+	\vect\tau = \g(\q) + \J_A^\trans(\q) \K_P \xe - \J_A^\trans(\q) \K_D \J_A(\q) \dq
+\]
+Lyapunov's function
+\[
+	V(\xe,\dq) = \frac{1}{2} \dq^\trans\B(\q)\dq + \frac{1}{2}\xe^\trans \K_P \xe
+\]
+Closed loop
+\[
+	\B(\q)\ddq + \C(\q,\dq)\dq = \J_A^\trans(\q) \K_P \xe - \J_A^\trans(\q) \K_D \J_A(\q) \dq
+\]
+Block diagram in \autoref{fig:pd-gravity-operational}
+
+\subsubsection{Inverse dynamic control}
+
+Control law
+\begin{align*}
+	\vect \tau &= \B(\q)\y + \n(\q,\dq) \\
+	\y &= \J_A^\inv(\q) \left( \ddxd + \K_D\dxe + \K_P \xe - \dJ_A(\q,\dq)\dq \right)
+\end{align*}
+Open loop
+\[
+	\ddq = \y
+\]
+Closed loop
+\[
+	\ddxe + \K_D \dxe + \K_P \xe = 0
+\]
+Block diagram in \autoref{fig:inverse-dynamics-control-operational-space}
+\begin{nb}needs inversion of $\J_A$, then it cannot be used with redundant robots\end{nb}
