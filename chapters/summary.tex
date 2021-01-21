@@ -72,3 +72,28 @@ Closed loop
 \]
 Block diagram in \autoref{fig:inverse-dynamics-control-operational-space}
 \begin{nb}needs inversion of $\J_A$, then it cannot be used with redundant robots\end{nb}
+
+\section{Control of the interaction}
+
+\subsection{Impedance control}
+System
+\[
+	\B(\q)\ddq + \C(\q,\dq)\dq + \g(\q) = \vect\tau - \J^\trans(\q)\vect\gamma
+\]
+Control law
+\begin{align*}
+	\vect\tau &= \B(\q)\y + \C(\q,\dq)\dq + \g(\q) + \J^\trans(\q)\gamma \\
+	\y &= \J_A^\inv(\q) \matr M_d^\inv \left( \matr M_d \ddxd + \matr D_d\dxe + \K_d \xe - \matr M_d \dJ_A(\q,\dq)\dq - \vect\gamma_A \right)
+\end{align*}
+Closed loop
+\[
+	\matr M_d \ddxe + \matr D_d \dxe + \K_d \xe = \vect\gamma_A
+\]
+
+\subsection{Admittance control}
+Dynamics
+\[
+	\xd - \x \approx \frac{1}{\matr M_d s^2+ \matr D_d s+ \matr K_d } \vect f_{ext}
+\]
+Block diagram in \autoref{fig:admittance-control-interaction}
+\begin{nb}requires a high bandwidth position controller\end{nb}
