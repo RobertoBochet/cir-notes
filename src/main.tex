@@ -1,0 +1,37 @@
+\documentclass[12pt]{notes}
+
+\include{math_macro}
+
+% defines the license
+\usepackage[
+	type={CC},
+	modifier={by-sa},
+	version={4.0}
+]{doclicense}
+
+% adds bibliography file
+\addbibresource{references.bib}
+
+
+\title{Control of industrial robots\\Notes\footnote{the whole document is based on \cite{cir-slides} and \cite{ssvo-robotics}}}
+\author{Roberto Bochet}
+
+
+\begin{document}
+	\maketitle
+	\printbibliography
+	\tableofcontents
+
+
+	\include{chapters/1-kinematic_redundancy}
+	\include{chapters/2-dynamics}
+	\include{chapters/3-motion_planning}
+	\include{chapters/4-decentralized_control}
+	\include{chapters/5-centralized_control}
+	\include{chapters/6-control_interaction}
+	\include{chapters/7-vision-control}
+	\include{chapters/summary}
+
+
+	\printindex
+\end{document}

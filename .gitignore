@@ -11,4 +11,9 @@
 *.run.xml
 *.synctex.gz
 *.synctex(busy)
+<<<<<<< HEAD
 *toc
+=======
+*.toc
+*.pdf
+>>>>>>> template/master
